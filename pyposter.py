@@ -1,4 +1,14 @@
-﻿from optparse import OptionParser
+﻿import fnmatch, os, sys
+import yenc
+from optparse import OptionParser
+
+def encode():
+	with open('readme.md', 'rb') as f:
+		data = f.read()
+		encdata = yenc.encoder.encode(data,5)
+
+	with open('asdfaf.txt', 'wb') as f:
+		f.write(encdata)
 
 def main():
 	usage = "usage: %prog [options] file(s)"
@@ -26,4 +36,4 @@ def main():
 		sys.exit(1)
 
 if __name__ == '__main__':
-	main()
+	encode()
