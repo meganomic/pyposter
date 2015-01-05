@@ -1,11 +1,30 @@
 ﻿import fnmatch, os, sys
-import yenc
+import yenc, parts
 from optparse import OptionParser
+
+def loadfile(filename):
+	with open(filename, 'rb') as f:
+		f.seek(0, 2) # Seek to EOF
+		size = f.tell() # Size of file
+		if size <= 640000: # Calculate numnber of segments
+			segments = 1
+		else:
+			segments = int(size / 640000)
+
+		f.seek(0,0) # Reset file pointer
+		data = bytearray(640000)
+
+		for num in range(0,segments):
+			bytesread = f.readinto(data)
+			part = parts.part(data, num+1, segments, filename, bytesread)
+			with open('asdfaf' + str(num) + '.txt', 'wb') as f2:
+				complete = part.header() + part.encode() + part.trailer()
+				f2.write(complete)
 
 def encode():
 	with open('readme.md', 'rb') as f:
 		data = f.read()
-		encdata = yenc.encoder.encode(data,5)
+		encdata = yenc.encode(data)
 
 	with open('asdfaf.txt', 'wb') as f:
 		f.write(encdata)
@@ -36,4 +55,4 @@ def main():
 		sys.exit(1)
 
 if __name__ == '__main__':
-	encode()
+	loadfile('ragnarok.001')
