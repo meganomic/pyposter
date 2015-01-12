@@ -1,4 +1,4 @@
-﻿import fnmatch, os, sys, configparser, argparse
+﻿import fnmatch, os, sys, configparser, argparse, time
 import parts
 import nntplib
 
@@ -18,8 +18,8 @@ class usenet:
 	def quit(self):
 		self.server.quit()
 
-	def post(self, message):
-		self.server.post(message)
+	def post(self, article):
+		self.server.post(article)
 
 	def message_header(self, subject):
 		return bytes('From: ' +  self.head_from + '\r\nNewsgroups: ' + self.head_newsgroups + '\r\nSubject: ' + subject + '\r\n\r\n', 'utf-8')
@@ -42,9 +42,10 @@ def upload_file(filename, usenet_con):
 			if segments == 1:
 				subject = '\"' + filename + '\" ' + str(filesize) + ' yEnc bytes'
 			else:
-				subject = 'rosa psykel' + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
-			message = usenet_con.message_header(subject) + part.header() + part.encode() + part.trailer() # Construct message
-			usenet_con.post(message) # Post message to usenet
+				subject = 'what about now nr 2' + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
+			article = usenet_con.message_header(subject) + part.header() + part.encode() + part.trailer() # Construct message
+			usenet_con.post(article) # Post article to usenet
+			time.sleep(0.01) # I get missing articles sometimes if there is no delay. I dunno, broken...
 
 def main():
 	parser = argparse.ArgumentParser(usage='%(prog)s [options] subject newsgroup file(s)', description='Post articles to usenet.')
