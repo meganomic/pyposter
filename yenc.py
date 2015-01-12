@@ -6,7 +6,7 @@ def encode(data):
 		if o == 0x00 or o == 0x0A or o == 0x0D or o == 0x3D: # Check for forbidden characters
 			encdata.append(0x3D) # Add escape character
 			clinelen += 1
-			o = (b+64) % 256 # Do magic yenc encoding for escaped character
+			o = (o+64) % 256 # Do magic yenc encoding for escaped character
 
 		encdata.append(o) # Save encoded data
 
