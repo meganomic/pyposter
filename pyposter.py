@@ -1,6 +1,5 @@
-﻿import fnmatch, os, sys, configparser, argparse, time, glob
+﻿import configparser, argparse, time, glob, nntplib
 import parts
-import nntplib
 
 class usenet:
 	def __init__(self, serveraddress, port, username, password, head_from, head_newsgroups):
