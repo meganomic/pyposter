@@ -1,4 +1,4 @@
-﻿import fnmatch, os, sys, configparser, argparse, time
+﻿import fnmatch, os, sys, configparser, argparse, time, glob
 import parts
 import nntplib
 
@@ -42,12 +42,12 @@ def upload_file(filename, usenet_con):
 			if segments == 1:
 				subject = '\"' + filename + '\" ' + str(filesize) + ' yEnc bytes'
 			else:
-				subject = 'what about now nr 2' + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
+				subject = 'qwer' + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
 			article = usenet_con.message_header(subject) + part.header() + part.encode() + part.trailer() # Construct message
 			usenet_con.post(article) # Post article to usenet
-			time.sleep(0.01) # I get missing articles sometimes if there is no delay. I dunno, broken...
 
 def main():
+	# Need some commandline options
 	parser = argparse.ArgumentParser(usage='%(prog)s [options] subject newsgroup file(s)', description='Post articles to usenet.')
 	parser.add_argument('newsgroup', help = 'Newsgroup to post to')
 	parser.add_argument('files', metavar = 'file(s)', nargs = '+',
@@ -55,10 +55,10 @@ def main():
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
 
-	args = parser.parse_args()
+	args = parser.parse_args() # Contains the arguments
 
 	config = configparser.ConfigParser()
-	config.read('pyposter.ini')
+	config.read('pyposter.ini') # Read the ini file
 
 	if args.username == None: # Override ini file if commandline set
 		username = config['pyposter']['username']
@@ -70,14 +70,15 @@ def main():
 	else:
 		password = args.password
 
-	# Connect to usenet server
+	# Setup usenet connection
 	usenet_con = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password, config['pyposter']['from'], args.newsgroup)
-	usenet_con.connect()
+	usenet_con.connect() # Connect to server
 
-	for file in args.files:
-		upload_file(file, usenet_con)
-	
-	usenet_con.quit()
+	for filearg in args.files: # Iterate through file list
+		for file in glob.glob(filearg): # Expand possible wildcards and iterate over results
+			upload_file(file, usenet_con) # Go upload the files!
+
+	usenet_con.quit() # Remember to disconnect =)
 
 if __name__ == '__main__':
 	main()
