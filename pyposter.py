@@ -43,8 +43,6 @@ def upload_file(filename, subject, usenet_con):
 			else:
 				subject_ed = subject + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
 			article = usenet_con.message_header(subject_ed) + part.header() + part.encode() + part.trailer() # Construct message
-#			with open('asdfaf.txt', 'wb') as f2:
-#				f2.write(article)
 			usenet_con.post(article) # Post article to usenet
 
 def main():

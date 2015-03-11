@@ -1,5 +1,5 @@
 #import yenc
-import ctypes
+import ctypes, zlib
 
 cyenc = ctypes.CDLL("cyenc.dll")
 
@@ -27,7 +27,7 @@ class part:
 			return bytes('=ybegin line=128 size=' + str(self.size) + ' name=' + self.name + '\r\n', 'utf-8')
 	def trailer(self):
 		if self.totalparts > 1:
-			return bytes('\r\n=yend size=' + str(self.size) + ' part=' + str(self.partnr), 'utf-8')
+			return bytes('\r\n=yend size=' + str(self.size) + ' part=' + str(self.partnr) + ' crc32=' + str(hex(self.crc32))[2:10], 'utf-8')
 		else:
 			return bytes('\r\n=yend size=' + str(self.size), 'utf-8')
 
@@ -35,4 +35,5 @@ class part:
 		cyenc.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char), ctypes.c_int] # Convert to these types when calling dll function pls
 		output = ctypes.create_string_buffer(self.size*2) # Create a big buffer so we don't run out of space
 		encoded_size = cyenc.encode(ctypes.create_string_buffer(bytes(self.data)), output, self.size) # Encode to yenc using external dll
+		self.crc32 = zlib.crc32(output[0:encoded_size]) & 0xffffffff
 		return output[0:encoded_size]

@@ -8,7 +8,7 @@ int encode(char* input, char* output, unsigned int size) {
 
 	for (unsigned int i = 0; i < size; i++) {
 		enc = (input[i] + 42) % 256; // Encode in the input character
-		if (input[i] == 0x00 || input[i] == 0x0A || input[i] == 0x0D || input[i] == 0x3D) { // Check for illegal yenc characters and escape them
+		if (enc == 0x00 || enc == 0x0A || enc == 0x0D || enc == 0x3D) { // Check for illegal yenc characters and escape them
 			output[cc] = 0x3D; // Add escape character for illegal character
 			cc++;
 			current_length += 1; // Can't have a line that is too long
