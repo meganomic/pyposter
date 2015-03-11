@@ -1,4 +1,4 @@
-﻿import configparser, argparse, time, glob, nntplib, ctypes
+﻿import configparser, argparse, time, glob, nntplib, ctypes, zlib
 import parts
 
 class usenet:
@@ -24,6 +24,8 @@ class usenet:
 		return bytes('From: ' +  self.head_from + '\r\nNewsgroups: ' + self.head_newsgroups + '\r\nSubject: ' + subject + '\r\n\r\n', 'utf-8')
 
 def upload_file(filename, subject, usenet_con):
+	crc32 = zlib.crc32(open(filename,'rb').read()) & 0xffffffff # Get crc32 of entire file for yenc specification
+
 	with open(filename, 'rb') as f:
 		f.seek(0, 2) # Seek to EOF
 		filesize = f.tell() # Size of file
@@ -37,7 +39,7 @@ def upload_file(filename, subject, usenet_con):
 
 		for seg in range(0,segments):
 			bytesread = f.readinto(data) # Read data
-			part = parts.part(data, seg+1, segments, filename, bytesread) # Add relevant data to message part
+			part = parts.part(data, seg+1, segments, filename, bytesread, crc32) # Add relevant data to message part
 			if segments == 1:
 				subject_ed = subject + ' - \"' + filename + '\" ' + str(filesize) + ' yEnc bytes'
 			else:
