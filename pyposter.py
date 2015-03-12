@@ -1,5 +1,5 @@
 ﻿import configparser, argparse, glob, nntplib, zlib
-import parts
+import parts, nzb
 
 class usenet:
 	def __init__(self, serveraddress, port, username, password, head_from, head_newsgroups):
@@ -19,12 +19,14 @@ class usenet:
 	def post(self, article):
 		self.server.post(article) # Post the article to usenet
 
-	def message_header(self, subject): # Format the article header
-		return bytes('From: ' +  self.head_from + '\r\nNewsgroups: ' + self.head_newsgroups + '\r\nSubject: ' + subject + '\r\n\r\n', 'utf-8')
+	def message_header(self, subject, messageid): # Format the article header
+		return bytes('From: ' +  self.head_from + '\r\nNewsgroups: ' + self.head_newsgroups + '\r\nSubject: ' + subject + '\r\nMessage-ID: <' + messageid + '>\r\n\r\n', 'utf-8')
 
 def upload_file(filename, subject, usenet_con):
 	crc32 = zlib.crc32(open(filename,'rb').read()) & 0xffffffff # Get crc32 of entire file for yenc specification
 
+	nzb_file = nzb.nzb(usenet_con.head_from, subject)
+	nzb_file.add_group(usenet_con.head_newsgroups)
 	with open(filename, 'rb') as f:
 		f.seek(0, 2) # Seek to EOF
 		filesize = f.tell() # Size of file
@@ -43,8 +45,10 @@ def upload_file(filename, subject, usenet_con):
 				subject_ed = subject + ' - \"' + filename + '\" ' + str(filesize) + ' yEnc bytes'
 			else:
 				subject_ed = subject + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
-			article = usenet_con.message_header(subject_ed) + part.header() + part.encode() + part.trailer() # Construct message
+			messageid = nzb_file.add_segment(bytesread, seg+1)
+			article = usenet_con.message_header(subject_ed, messageid) + part.header() + part.encode() + part.trailer() # Construct message
 			usenet_con.post(article) # Post article to usenet
+	nzb_file.save(filename.split('.')[0] + '.nzb')
 
 def main():
 	# Need some commandline options
