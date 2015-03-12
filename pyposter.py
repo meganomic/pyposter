@@ -1,4 +1,4 @@
-﻿import configparser, argparse, time, glob, nntplib, ctypes, zlib
+﻿import configparser, argparse, glob, nntplib, zlib
 import parts
 
 class usenet:
@@ -10,17 +10,16 @@ class usenet:
 		self.head_from = head_from
 		self.head_newsgroups = head_newsgroups
 
-	def connect(self):
+	def connect(self): # Connect to the server, strangely enough
 		self.server = nntplib.NNTP(self.serveraddress, self.port, self.username, self.password)
-		#self.server.set_debuglevel(1)
 
 	def quit(self):
-		self.server.quit()
+		self.server.quit() # Gotta close down that connection
 
 	def post(self, article):
-		self.server.post(article)
+		self.server.post(article) # Post the article to usenet
 
-	def message_header(self, subject):
+	def message_header(self, subject): # Format the article header
 		return bytes('From: ' +  self.head_from + '\r\nNewsgroups: ' + self.head_newsgroups + '\r\nSubject: ' + subject + '\r\n\r\n', 'utf-8')
 
 def upload_file(filename, subject, usenet_con):
@@ -30,14 +29,14 @@ def upload_file(filename, subject, usenet_con):
 		f.seek(0, 2) # Seek to EOF
 		filesize = f.tell() # Size of file
 		if filesize <= 640000: # Calculate number of segments
-			segments = 1
+			segments = 1 # If size is below 640000 then there is only 1 segment.
 		else:
 			segments = int(filesize / 640000)
 
 		f.seek(0,0) # Reset file pointer
-		data = bytearray(640000)
+		data = bytearray(640000) # Need a buffer for reading the file into
 
-		for seg in range(0,segments):
+		for seg in range(0,segments): # Let's go through the segments!
 			bytesread = f.readinto(data) # Read data
 			part = parts.part(data, seg+1, segments, filename, bytesread, crc32) # Add relevant data to message part
 			if segments == 1:
