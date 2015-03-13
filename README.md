@@ -2,7 +2,6 @@ pyposter
 ========
 
 A simple usenet binary poster using python.
-Can currently only upload single files.
 
 Requires Python 3 to run.
 
