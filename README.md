@@ -7,3 +7,5 @@ Requires Python 3 to run.
 
 Just clone it and run pyposter.py.
 Should work fine on both windows and linux
+
+Remember to edit pyposter.ini before using!
