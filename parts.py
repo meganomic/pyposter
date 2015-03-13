@@ -1,7 +1,10 @@
 #import yenc
-import ctypes, zlib
+import ctypes, zlib, platform
 
-cyenc = ctypes.CDLL("cyenc.dll")
+if platform.system() == 'Windows':
+    cyenc = ctypes.CDLL('cyenc.dll')
+else:
+    cyenc = ctypes.CDLL('./cyenc.so')
 
 class part:
 	def __init__(self, data, partnr, totalparts, name, size, crc32):

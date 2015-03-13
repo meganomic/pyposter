@@ -1,6 +1,10 @@
 #include <string>
 
-extern "C" __declspec(dllexport) int encode(char* input, char* output, unsigned int size);
+#ifdef _WIN32 
+    extern "C" __declspec(dllexport) int encode(char* input, char* output, unsigned int size);
+#else
+    extern "C" int encode(char* input, char* output, unsigned int size);
+#endif
 
 int encode(char* input, char* output, unsigned int size) {
 	int current_length = 0, cc = 0; // cc, current character
