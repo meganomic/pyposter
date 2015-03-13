@@ -37,15 +37,15 @@ def base36(number): # Stole this function from https://github.com/tonyseek/pytho
 
 class nzb_file:
 	def __init__(self, poster, subject):
-		self.poster = html.escape(poster, True)
-		self.subject = html.escape(subject, True)
-		self.time = str(int(time.time()))
+		self.poster = html.escape(poster, True) # Escape poster just incase, who knows
+		self.subject = html.escape(subject, True) # Escape subject line since it contains quotes
+		self.time = str(int(time.time())) # The current time
 		self.segments = []
 	
 	def add_segment(self, size, partnr): # The segments of the file that was posted
 		# Make sure id is fucking unique, using 4x random numbers + current time. converting it to base36 for the lulz
 		messageid = base36(int(random.SystemRandom().randint(10000000, 99999999))) + base36(int(random.SystemRandom().randint(10000000, 99999999))) + base36(int(random.SystemRandom().randint(10000000, 99999999))) + base36(int(time.time()*1000000)) + base36(int(random.SystemRandom().randint(10000000, 99999999))) + '@' + self.poster.split(' ')[0].split('@')[1] # Create a message id using poster email and current posix time
-		self.segments.append((str(size), str(partnr), messageid))
+		self.segments.append((str(size), str(partnr), messageid)) # Add segment to list
 		return messageid # Return the Message-ID for use when posting
 	
 class nzb:
@@ -67,7 +67,7 @@ class nzb:
 			f.write('<nzb xmlns=\"http://www.newzbin.com/DTD/2003/nzb\">\n')
 
 			for file in self.files:
-				f.write('    <file poster=\"' + file.poster + '\" date=\"' + str(int(time.time())) + '\" subject=\"' + file.subject + '\">\n')
+				f.write('    <file poster=\"' + file.poster + '\" date=\"' + file.time + '\" subject=\"' + file.subject + '\">\n')
 
 				f.write('        <groups>\n')
 				for group in self.groups: 
