@@ -1,5 +1,5 @@
-﻿import configparser, argparse, glob, nntplib, zlib
-import parts, nzb
+﻿import configparser, argparse, glob, nntplib, zlib, os
+import parts, nzb, preprocess
 
 class usenet:
 	def __init__(self, serveraddress, port, username, password, head_from, head_newsgroups):
@@ -22,10 +22,11 @@ class usenet:
 	def message_header(self, subject, messageid): # Format the article header
 		return bytes('From: ' +  self.head_from + '\r\nNewsgroups: ' + self.head_newsgroups + '\r\nSubject: ' + subject + '\r\nMessage-ID: <' + messageid + '>\r\n\r\n', 'utf-8')
 
-def upload_file(filename, subject, usenet_con, nzbs):
-	crc32 = zlib.crc32(open(filename,'rb').read()) & 0xffffffff # Get crc32 of entire file for yenc specification
+def upload_file(filenm, subject, usenet_con, nzbs):
+	crc32 = zlib.crc32(open(filenm,'rb').read()) & 0xffffffff # Get crc32 of entire file for yenc specification
 
-	with open(filename, 'rb') as f:
+	with open(filenm, 'rb') as f:
+		filename = os.path.split(filenm)[1]
 		f.seek(0, 2) # Seek to EOF
 		filesize = f.tell() # Size of file
 		if filesize <= 640000: # Calculate number of segments
@@ -47,7 +48,9 @@ def upload_file(filename, subject, usenet_con, nzbs):
 				subject_ed = subject + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
 			messageid = nzfile.add_segment(bytesread, seg+1)
 			article = usenet_con.message_header(subject_ed, messageid) + part.header() + part.encode() + part.trailer() # Construct message
-			usenet_con.post(article) # Post article to usenet
+			#usenet_con.post(article) # Post article to usenet
+			with open(filename + '.txt', 'wb') as f2:
+				f2.write(article)
 			
 
 def main():
@@ -77,16 +80,20 @@ def main():
 
 	# Setup usenet connection
 	usenet_con = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password, config['pyposter']['from'], args.newsgroup)
-	usenet_con.connect() # Connect to server
+	#usenet_con.connect() # Connect to server
 
 	nzbs = nzb.nzb(config['pyposter']['from'], args.subject)
 	nzbs.add_group(args.newsgroup)
-
-	for filearg in args.files: # Iterate through file list
+	
+	allfiles = []
+	for filearg in args.files: # I need a list of all files for processing
 		for file in glob.glob(filearg): # Expand possible wildcards and iterate over results
-			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
+			allfiles.append(file)
+	
+	for file in preprocess.process(allfiles, True, False):
+		upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
 
-	usenet_con.quit() # Remember to disconnect =)
+	#usenet_con.quit() # Remember to disconnect =)
 
 	nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
 

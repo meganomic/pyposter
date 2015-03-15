@@ -86,15 +86,14 @@ def process(files, split, verbose):
 			print('Creating par2 files... (This may take several minutes)')
 			print('Creating par2 for ' + filename + '...')
 			createpar2(blocksize, outputdir, filename + '.par', filename, verbose)
-		return
+	else:
+		print('Creating rar(s)...')
+		rarfile = os.path.splitext(files[0])[0] + '.rar'
+		filelist = createrars(desiredsize, outputdir, rarfile, files)
 
-	print('Creating rar(s)...')
-	rarfile = os.path.splitext(files[0])[0] + '.rar'
-	filelist = createrars(desiredsize, outputdir, rarfile, files)
-
-	print('Creating par2 files... (This may take several minutes)')
-	print('Creating par2 for ' + rarfile + '...')
-	createpar2(blocksize, outputdir, rarfile + '.par', filelist, verbose)
+		print('Creating par2 files... (This may take several minutes)')
+		print('Creating par2 for ' + rarfile + '...')
+		createpar2(blocksize, outputdir, rarfile + '.par', filelist, verbose)
 
 	allfiles = [] # Need a list of all the files we made
 	for filename in os.listdir(outputdir): # Go through all entries in the output directory
@@ -102,7 +101,5 @@ def process(files, split, verbose):
 		if os.path.isfile(path): # Check that it's really a file before adding
 			allfiles.append(path)
 
+	print('Preprocessing done!')
 	return allfiles # Return a list of all processed files
-
-if __name__ == '__main__':
-	process(['test.mkv'], False, False)
