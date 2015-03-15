@@ -9,5 +9,5 @@ Just clone it and run pyposter.py. Should work fine on both Windows and Linux
 
 Remember to edit pyposter.ini before using!
 
-Also, don't use this. It's broken. If you aren't me you will just break the internet.
+Also, don't use this. It contains hidden evil assumptions about input. If you aren't me you might break the internet.
 Good luck, have fun if you give it a try anyway.
