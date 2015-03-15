@@ -63,7 +63,10 @@ def main():
 						help = 'list of files to upload')
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
-	parser.add_argument('--pre', action='store_true', default = False, help = 'Use preprocessing')
+	parser.add_argument('--nonzb', action='store_true', help = "Don't create a nzb file")
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument('--rar', action='store_true', default = False, help = 'Rar files before upload')
+	group.add_argument('--split', action='store_true', default = False, help = 'Split files before upload')
 
 	args = parser.parse_args() # Contains the arguments
 
@@ -92,16 +95,20 @@ def main():
 		for file in glob.glob(filearg): # Expand possible wildcards and iterate over results
 			allfiles.append(file) # Add file to list
 	
-	if args.pre == True: # Should preprocessing be run?
+	if args.split == True: # Should split preprocessing be run?
 		for file in preprocess.process(allfiles, True, False):
 			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
-	else:
+	elif args.rar == True: # Should rar preprocessing be run?
+		for file in preprocess.process(allfiles, False, False):
+			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
+	else: # Preprocessing is for losers. Just upload the file pls.
 		for file in allfiles:
 			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
 
 	usenet_con.quit() # Remember to disconnect =)
 
-	nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
+	if args.nonzb == Fale:
+		nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
 
 if __name__ == '__main__':
 	main()
