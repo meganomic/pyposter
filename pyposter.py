@@ -22,7 +22,7 @@ class usenet:
 	def message_header(self, subject, messageid): # Format the article header
 		return bytes('From: ' +  self.head_from + '\r\nNewsgroups: ' + self.head_newsgroups + '\r\nSubject: ' + subject + '\r\nMessage-ID: <' + messageid + '>\r\n\r\n', 'utf-8')
 
-def upload_file(filenm, subject, usenet_con, nzbs):
+def upload_file(filenm, subject, usenet_con, nzbs, blocksize):
 	crc32 = zlib.crc32(open(filenm,'rb').read()) & 0xffffffff # Get crc32 of entire file for yenc specification
 
 	with open(filenm, 'rb') as f:
@@ -30,15 +30,15 @@ def upload_file(filenm, subject, usenet_con, nzbs):
 		print('Uploading ' + filename + '... ', end='\r')
 		f.seek(0, 2) # Seek to EOF
 		filesize = f.tell() # Size of file
-		if filesize <= 640000: # Calculate number of segments
+		if filesize <= blocksize: # Calculate number of segments
 			segments = 1 # If size is below 640000 then there is only 1 segment.
 			nzfile = nzbs.add_file(usenet_con.head_from, subject + ' - \"' + filename + '\" ' + str(filesize) + ' yEnc bytes')
 		else:
-			segments = int(filesize / 640000)
+			segments = int(filesize / blocksize)
 			nzfile = nzbs.add_file(usenet_con.head_from, subject + ' - \"' + filename + '\" ' + 'yEnc ' + '(1' + '/' + str(segments) + ')')
 
 		f.seek(0,0) # Reset file pointer
-		data = bytearray(640000) # Need a buffer for reading the file into
+		data = bytearray(blocksize) # Need a buffer for reading the file into
 		
 		for seg in range(0,segments): # Let's go through the segments!
 			print('Uploading ' + filename + '... Part %d of %d' % (seg+1, segments), end='\r')
@@ -72,7 +72,7 @@ def main():
 
 	config = configparser.ConfigParser()
 	config.read('pyposter.ini') # Read the ini file
-
+	
 	if args.username == None: # Override ini file if commandline set
 		username = config['pyposter']['username']
 	else:
@@ -96,14 +96,14 @@ def main():
 			allfiles.append(file) # Add file to list
 	
 	if args.split == True: # Should split preprocessing be run?
-		for file in preprocess.process(allfiles, True, False):
-			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
+		for file in preprocess.process(allfiles, True, False, config['process']['blocksize'], config['process']['desiredsize']):
+			upload_file(file, args.subject, usenet_con, nzbs, config['process']['blocksize']) # Go upload the files!
 	elif args.rar == True: # Should rar preprocessing be run?
-		for file in preprocess.process(allfiles, False, False):
-			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
+		for file in preprocess.process(allfiles, False, False, config['process']['blocksize'], config['process']['desiredsize']):
+			upload_file(file, args.subject, usenet_con, nzbs, config['process']['blocksize']) # Go upload the files!
 	else: # Preprocessing is for losers. Just upload the file pls.
 		for file in allfiles:
-			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
+			upload_file(file, args.subject, usenet_con, nzbs, config['process']['blocksize']) # Go upload the files!
 
 	usenet_con.quit() # Remember to disconnect =)
 
