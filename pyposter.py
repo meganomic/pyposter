@@ -27,6 +27,7 @@ def upload_file(filenm, subject, usenet_con, nzbs):
 
 	with open(filenm, 'rb') as f:
 		filename = os.path.split(filenm)[1]
+		print('Uploading ' + filename + '... ', end='\r')
 		f.seek(0, 2) # Seek to EOF
 		filesize = f.tell() # Size of file
 		if filesize <= 640000: # Calculate number of segments
@@ -40,6 +41,7 @@ def upload_file(filenm, subject, usenet_con, nzbs):
 		data = bytearray(640000) # Need a buffer for reading the file into
 		
 		for seg in range(0,segments): # Let's go through the segments!
+			print('Uploading ' + filename + '... Part %d of %d' % (seg+1, segments), end='\r')
 			bytesread = f.readinto(data) # Read data
 			part = parts.part(data, seg+1, segments, filename, bytesread, crc32) # Add relevant data to message part
 			if segments == 1:
@@ -48,10 +50,9 @@ def upload_file(filenm, subject, usenet_con, nzbs):
 				subject_ed = subject + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
 			messageid = nzfile.add_segment(bytesread, seg+1)
 			article = usenet_con.message_header(subject_ed, messageid) + part.header() + part.encode() + part.trailer() # Construct message
-			#usenet_con.post(article) # Post article to usenet
-			with open(filename + '.txt', 'wb') as f2:
-				f2.write(article)
-			
+			usenet_con.post(article) # Post article to usenet
+
+		print('Uploading ' + filename + '... ' + 'Done!               ')
 
 def main():
 	# Need some commandline options
@@ -80,7 +81,7 @@ def main():
 
 	# Setup usenet connection
 	usenet_con = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password, config['pyposter']['from'], args.newsgroup)
-	#usenet_con.connect() # Connect to server
+	usenet_con.connect() # Connect to server
 
 	nzbs = nzb.nzb(config['pyposter']['from'], args.subject)
 	nzbs.add_group(args.newsgroup)
@@ -93,7 +94,7 @@ def main():
 	for file in preprocess.process(allfiles, True, False):
 		upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
 
-	#usenet_con.quit() # Remember to disconnect =)
+	usenet_con.quit() # Remember to disconnect =)
 
 	nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
 
