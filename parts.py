@@ -1,21 +1,21 @@
 #import yenc
-import ctypes, zlib, platform
+import ctypes, zlib, platform, os, sys
 
-if platform.system() == 'Windows':
-    cyenc = ctypes.CDLL('cyenc.dll')
+if platform.system() == 'Windows': # Check if it's windows
+    cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyenc.dll'))
 else:
-    cyenc = ctypes.CDLL('./cyenc.so')
+    cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyenc.so')) # Assume linux if not
 
 class part:
 	def __init__(self, data, partnr, totalparts, name, size, crc32):
-		self.startpos = 0
-		self.endpos = 0
-		self.partnr = partnr
-		self.totalparts = totalparts
-		self.size = size
+		self.startpos = 0 # Position of the data in the original file
+		self.endpos = 0 # Position of the data in the original file
+		self.partnr = partnr # What part is this again?
+		self.totalparts = totalparts # Total number of parts
+		self.size = size # Size of this part
 		self.name = name
-		self.data = data
-		self.crc32 = crc32
+		self.data = data # The data =)
+		self.crc32 = crc32 # The checksum of the data
 		
 		if size == 640000: # Save the positions in the original file for this part so we can put it back together
 			self.startpos = partnr * size - size
