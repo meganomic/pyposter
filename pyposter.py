@@ -50,7 +50,7 @@ def upload_file(filenm, subject, usenet_con, nzbs):
 				subject_ed = subject + ' - \"' + filename + '\" ' + 'yEnc ' + '(' + str(seg+1) + '/' + str(segments) + ')'
 			messageid = nzfile.add_segment(bytesread, seg+1)
 			article = usenet_con.message_header(subject_ed, messageid) + part.header() + part.encode() + part.trailer() # Construct message
-			usenet_con.post(article) # Post article to usenet
+			#usenet_con.post(article) # Post article to usenet
 
 		print('Uploading ' + filename + '... ' + 'Done!               ')
 
@@ -63,6 +63,7 @@ def main():
 						help = 'list of files to upload')
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
+	parser.add_argument('--pre', action='store_true', default = False, help = 'Use preprocessing')
 
 	args = parser.parse_args() # Contains the arguments
 
@@ -81,7 +82,7 @@ def main():
 
 	# Setup usenet connection
 	usenet_con = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password, config['pyposter']['from'], args.newsgroup)
-	usenet_con.connect() # Connect to server
+	#usenet_con.connect() # Connect to server
 
 	nzbs = nzb.nzb(config['pyposter']['from'], args.subject)
 	nzbs.add_group(args.newsgroup)
@@ -89,12 +90,16 @@ def main():
 	allfiles = []
 	for filearg in args.files: # I need a list of all files for processing
 		for file in glob.glob(filearg): # Expand possible wildcards and iterate over results
-			allfiles.append(file)
+			allfiles.append(file) # Add file to list
 	
-	for file in preprocess.process(allfiles, True, False):
-		upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
+	if args.pre == True: # Should preprocessing be run?
+		for file in preprocess.process(allfiles, True, False):
+			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
+	else:
+		for file in allfiles:
+			upload_file(file, args.subject, usenet_con, nzbs) # Go upload the files!
 
-	usenet_con.quit() # Remember to disconnect =)
+	#usenet_con.quit() # Remember to disconnect =)
 
 	nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
 
