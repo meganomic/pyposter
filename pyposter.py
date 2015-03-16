@@ -96,18 +96,18 @@ def main():
 			allfiles.append(file) # Add file to list
 	
 	if args.split == True: # Should split preprocessing be run?
-		for file in preprocess.process(allfiles, True, False, config['process']['blocksize'], config['process']['desiredsize']):
-			upload_file(file, args.subject, usenet_con, nzbs, config['process']['blocksize']) # Go upload the files!
+		for file in preprocess.process(allfiles, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
+			upload_file(file, args.subject, usenet_con, nzbs, int(config['process']['blocksize'])) # Go upload the files!
 	elif args.rar == True: # Should rar preprocessing be run?
-		for file in preprocess.process(allfiles, False, False, config['process']['blocksize'], config['process']['desiredsize']):
-			upload_file(file, args.subject, usenet_con, nzbs, config['process']['blocksize']) # Go upload the files!
+		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
+			upload_file(file, args.subject, usenet_con, nzbs, int(config['process']['blocksize'])) # Go upload the files!
 	else: # Preprocessing is for losers. Just upload the file pls.
 		for file in allfiles:
-			upload_file(file, args.subject, usenet_con, nzbs, config['process']['blocksize']) # Go upload the files!
+			upload_file(file, args.subject, usenet_con, nzbs, int(config['process']['blocksize'])) # Go upload the files!
 
 	usenet_con.quit() # Remember to disconnect =)
 
-	if args.nonzb == Fale:
+	if args.nonzb == False:
 		nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
 
 if __name__ == '__main__':
