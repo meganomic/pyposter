@@ -1,4 +1,4 @@
-import os, sys, subprocess, re
+import os, sys, subprocess, re, platform
 
 def splitfiles(partsize, outputdir, filename, numberofparts):
 	parts = list()
@@ -38,20 +38,30 @@ def createpar2(blocksize, outputdir, outputfile, filelist, verbose):
 	if type(filelist) == str: # filelist MUST be a list or bad things happen
 		filelist = [filelist] # Make filelist a list containing only filelist =) hahah
 
+	if platform.system() == 'Windows': # Check if it's windows
+		par2_exec = 'par2.exe'
+	else:
+		par2_exec = 'par2'
+
 	if verbose:
-		return subprocess.call('par2.exe ' + 'c -r20 -s' + str(blocksize) + ' \"' +
+		return subprocess.call(par2_exec + ' c -r20 -s' + str(blocksize) + ' \"' +
 							os.path.join(outputdir, outputfile) + '\" ' + subprocess.list2cmdline(filelist))
 	else:
-		return subprocess.call('par2.exe ' + 'c -r20 -s' + str(blocksize) + ' \"' +
+		return subprocess.call(par2_exec + ' c -r20 -s' + str(blocksize) + ' \"' +
 							os.path.join(outputdir, outputfile) + '\" ' + subprocess.list2cmdline(filelist), stdout=subprocess.DEVNULL)
 
 def createrars(rarsize, outputdir, outputfile, filelist):
-	rar = subprocess.Popen('rar.exe ' + 'a -m0 -v' + \
+	if platform.system() == 'Windows': # Check if it's windows
+		rar_exec = 'rar.exe'
+	else:
+		rar_exec = 'rar'
+
+	rar = subprocess.Popen(rar_exec + ' a -m0 -v' + \
 							str(rarsize) + 'b -mt2 \"' + os.path.join(outputdir, outputfile) + '\" ' + \
 							subprocess.list2cmdline(filelist), stdout=subprocess.PIPE)
 	stdout = rar.communicate()[0]
 
-	result = re.findall(".*?Creating archive (.*?.rar).*?", str(stdout))
+	result = re.findall(".*?Creating archive (.*?.rar).*?", str(stdout)) # Parse the output to get the filenames of created rars
 
 	#Fix for cases where there are only a single rar file
 	if len(result) == 1:
