@@ -1,4 +1,4 @@
-﻿import configparser, argparse, glob, nntplib, zlib, os
+﻿import configparser, argparse, glob, nntplib, zlib, os, sys
 import parts, nzb, preprocess
 
 class usenet:
@@ -57,10 +57,10 @@ def upload_file(filenm, subject, usenet_con, nzbs, blocksize):
 def main():
 	# Need some commandline options
 	parser = argparse.ArgumentParser(usage='%(prog)s [options] subject newsgroup file(s)', description='Post files to usenet.')
-	parser.add_argument('subject', help = 'Subject line')
 	parser.add_argument('newsgroup', help = 'Newsgroup to post to')
 	parser.add_argument('files', metavar = 'file(s)', nargs = '+',
 						help = 'list of files to upload')
+	parser.add_argument('--subject', dest = 'subject', help = 'Subject line, uses filename if not set')
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
 	parser.add_argument('--nonzb', action='store_true', help = "Don't create a nzb file")
@@ -71,7 +71,7 @@ def main():
 	args = parser.parse_args() # Contains the arguments
 
 	config = configparser.ConfigParser()
-	config.read('pyposter.ini') # Read the ini file
+	config.read(os.path.join(sys.path[0], 'pyposter.ini')) # Read the ini file
 	
 	if args.username == None: # Override ini file if commandline set
 		username = config['pyposter']['username']
@@ -82,7 +82,7 @@ def main():
 		password = config['pyposter']['password']
 	else:
 		password = args.password
-
+	
 	# Setup usenet connection
 	usenet_con = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password, config['pyposter']['from'], args.newsgroup)
 	usenet_con.connect() # Connect to server
@@ -92,9 +92,12 @@ def main():
 	
 	allfiles = []
 	for filearg in args.files: # I need a list of all files for processing
-		for file in glob.glob(filearg): # Expand possible wildcards and iterate over results
+		for file in glob.glob(glob.escape(filearg)): # Expand possible wildcards and iterate over results
 			allfiles.append(file) # Add file to list
-	
+
+	if args.subject == None: # If no subject set, use the filename of the first file
+		args.subject = allfiles[0]
+
 	if args.split == True: # Should split preprocessing be run?
 		for file in preprocess.process(allfiles, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
 			upload_file(file, args.subject, usenet_con, nzbs, int(config['process']['blocksize'])) # Go upload the files!
