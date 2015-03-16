@@ -3,10 +3,10 @@ import os, sys, subprocess, re, platform
 def splitfiles(partsize, outputdir, filename, numberofparts):
 	parts = list()
 	with open(filename, "rb") as f:
-		data = bytearray(partsize)
+		data = bytearray(partsize) # Read partsize of dataz
 		partnr = 1
-		while True:
-			if partnr < 10:
+		while True: # Just go forever bro
+			if partnr < 10: # Annoying naming thing, probably 100 better way to do it but I'm too stupid
 				if numberofparts < 10:
 					partname = filename + ".%d" % partnr
 				elif numberofparts >= 10 and numberofparts < 100:
@@ -29,7 +29,7 @@ def splitfiles(partsize, outputdir, filename, numberofparts):
 
 			parts.append(os.path.join(outputdir, partname))
 
-			with open(os.path.join(outputdir, partname), "wb") as f2:
+			with open(os.path.join(outputdir, partname), "wb") as f2: # Write split bit to disk
 				f2.write(data[0:length])
 
 	return parts
@@ -83,12 +83,12 @@ def process(files, split, verbose, blocksize, desiredsize):
 	#blocksize = 640000 # 5000 lines long * 128 chars wide
 	numberofparts = round(desiredsize / blocksize) # Number of parts to divide the file into
 	partsize = numberofparts * blocksize # Size of part after splitting original file
-	outputdir = os.path.join(os.getcwd(), 'tmp')
+	outputdir = os.path.join(os.getcwd(), 'tmp') # Set output to ./tmp
 
-	if not os.path.exists(outputdir):
+	if not os.path.exists(outputdir): # Check if ./tmp exists and if not, create it
 		os.makedirs(outputdir)
 
-	if split == True:
+	if split == True: # Should we split the files?
 		for filename in files: # Go through the list and do your stuff
 			print('Splitting file(s)...')
 			filelist = splitfiles(partsize, outputdir, filename, numberofparts)
