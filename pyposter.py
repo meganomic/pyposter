@@ -54,6 +54,17 @@ def upload_file(filenm, subject, usenet_con, nzbs, blocksize):
 
 		print('Uploading ' + filename + '... ' + 'Done!               ')
 
+def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
+	escapedfilename = []
+	for char in filename:
+		if char == '[':
+			escapedfilename.append('[[]')
+		elif char == ']':
+			escapedfilename.append('[]]')
+		else:
+			escapedfilename.append(char)
+	return ''.join(escapedfilename)
+
 def main():
 	# Need some commandline options
 	parser = argparse.ArgumentParser(usage='%(prog)s [options] subject newsgroup file(s)', description='Post files to usenet.')
@@ -92,7 +103,7 @@ def main():
 	
 	allfiles = []
 	for filearg in args.files: # I need a list of all files for processing
-		for file in glob.glob(filearg): # Expand possible wildcards and iterate over results
+		for file in glob.glob(escapefilename(filearg)): # Expand possible wildcards and iterate over results
 			allfiles.append(file) # Add file to list
 
 	if args.subject == None: # If no subject set, use the filename of the first file
