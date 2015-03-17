@@ -92,7 +92,7 @@ def main():
 	
 	allfiles = []
 	for filearg in args.files: # I need a list of all files for processing
-		for file in glob.glob(glob.escape(filearg)): # Expand possible wildcards and iterate over results
+		for file in glob.glob(filearg): # Expand possible wildcards and iterate over results
 			allfiles.append(file) # Add file to list
 
 	if args.subject == None: # If no subject set, use the filename of the first file
