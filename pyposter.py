@@ -96,7 +96,7 @@ def main():
 			allfiles.append(file) # Add file to list
 
 	if args.subject == None: # If no subject set, use the filename of the first file
-		args.subject = allfiles[0]
+		args.subject = os.path.splitext(os.path.split(allfiles[0])[1])[0]
 
 	if args.split == True: # Should split preprocessing be run?
 		for file in preprocess.process(allfiles, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
