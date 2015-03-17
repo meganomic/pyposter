@@ -39,7 +39,7 @@ def createpar2(blocksize, outputdir, outputfile, filelist, verbose):
 		filelist = [filelist] # Make filelist a list containing only filelist =) hahah
 
 	if platform.system() == 'Windows': # Check if it's windows
-		par2_exec = 'par2.exe'
+		par2_exec = os.path.join(sys.path[0], 'par2.exe')
 	else:
 		par2_exec = 'par2'
 
@@ -52,7 +52,7 @@ def createpar2(blocksize, outputdir, outputfile, filelist, verbose):
 
 def createrars(rarsize, outputdir, outputfile, filelist):
 	if platform.system() == 'Windows': # Check if it's windows
-		rar_exec = 'rar.exe'
+		rar_exec = os.path.join(sys.path[0], 'rar.exe')
 	else:
 		rar_exec = 'rar'
 
