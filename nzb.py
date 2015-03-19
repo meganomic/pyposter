@@ -4,15 +4,6 @@
 
 import time, random, html
 
-def base36(number): # Stole this function from https://github.com/tonyseek/python-base36/blob/master/base36.py
-	alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
-	value = ''
-	while number != 0:
-		number, index = divmod(number, len(alphabet))
-		value = alphabet[index] + value
-
-	return value
-
 class nzb_file:
 	def __init__(self, poster, subject):
 		self.poster = html.escape(poster, True) # Escape poster just incase, who knows
@@ -20,10 +11,8 @@ class nzb_file:
 		self.time = str(int(time.time())) # The current time
 		self.segments = []
 	
-	def add_segment(self, size, partnr): # The segments of the file that was posted
-		# Make sure id is fucking unique, using 4x random numbers + current time. converting it to base36 for the lulz
-		messageid = base36(int(random.SystemRandom().randint(10000000, 99999999))) + base36(int(random.SystemRandom().randint(10000000, 99999999))) + base36(int(random.SystemRandom().randint(10000000, 99999999))) + base36(int(time.time()*1000000)) + base36(int(random.SystemRandom().randint(10000000, 99999999))) + '@' + self.poster.split(' ')[0].split('@')[1] # Create a message id using poster email and current posix time
-		self.segments.append((str(size), str(partnr), messageid)) # Add segment to list
+	def addsegment(self, segmentsize, segmentnr, messageid): # The segments of the file that was posted
+		self.segments.append((str(segmentsize), str(segmentnr), messageid)) # Add segment to list
 		return messageid # Return the Message-ID for use when posting
 	
 class nzb:
@@ -31,11 +20,11 @@ class nzb:
 		self.groups = []
 		self.files = []
 
-	def add_file(self, poster, subject):
+	def addfile(self, poster, subject):
 		self.files.append(nzb_file(poster, subject)) # Add a nzb_file object to the files list
-		return self.files[-1] # Return the last object in the list
+		return self.files[-1]
 
-	def add_group(self, group):
+	def addgroup(self, group):
 		self.groups.append(group) # The groups that the file is posted to
 
 	def save(self, filename): # Save nzb file to disk
