@@ -9,3 +9,5 @@ Requires Python 3 to run. And I don't support no legacy 32 bit systems.
 
 - Requires par2cmdline for optional preprocessing functionality, http://chuchusoft.com/par2_tbb/
 - Requires rar for optional preprocessing functionality, http://www.rarlab.com/
+
+May or may not be broken.
