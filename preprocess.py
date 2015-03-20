@@ -78,12 +78,12 @@ def createrars(rarsize, outputdir, outputfile, filelist):
 		result[0] = result[0].replace('.rar', '.part001.rar')
 		return result
 
-def process(files, split, verbose, blocksize, desiredsize):
+def process(files, split, verbose, blocksize, desiredsize, outputdir):
 	#desiredsize = 19200000 # Results in 30 parts, nice default I guess
 	#blocksize = 640000 # 5000 lines long * 128 chars wide
 	numberofparts = round(desiredsize / blocksize) # Number of parts to divide the file into
 	partsize = numberofparts * blocksize # Size of part after splitting original file
-	outputdir = os.path.join(os.getcwd(), 'tmp') # Set output to ./tmp
+	# os.path.join(os.getcwd(), 'tmp') # Set output to ./tmp
 
 	if not os.path.exists(outputdir): # Check if ./tmp exists and if not, create it
 		os.makedirs(outputdir)

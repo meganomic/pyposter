@@ -1,5 +1,5 @@
 ﻿import configparser, argparse, glob, nntplib, os, sys, math
-import ctypes, random, time, platform, zlib
+import ctypes, random, time, platform, zlib, tempfile
 import nzb, preprocess
 
 class usenetfile():
@@ -106,9 +106,9 @@ class usenet:
 def uploadfile(filename, subject, usenetserver):
 	ufile = usenetfile(filename, subject)
 	for article, segnr, tsegnr in ufile:
-		print('Uploading ' + filename + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
+		print('Uploading ' + os.path.split(filename)[1] + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
 		usenetserver.upload(article)
-	print('Uploading ' + filename + '... Done!                         ')
+	print('Uploading ' + os.path.split(filename)[1] + '... Done!                         ')
 
 def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
 	escapedfilename = []
@@ -170,17 +170,20 @@ def main():
 	usenetserver = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password)
 	usenetserver.connect() # Connect to server
 
+	tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
+
 	if args.split == True: # Should split preprocessing be run?
-		for file in preprocess.process(allfiles, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
+		for file in preprocess.process(allfiles, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 	elif args.rar == True: # Should rar preprocessing be run?
-		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
+		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 	else: # Preprocessing is for losers. Just upload the file pls.
 		for file in allfiles:
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 
 	usenetserver.quit() # Remember to disconnect =)
+	tempdir.cleanup() # Cleanup the temporary directory
 
 	if args.nonzb == False:
 		nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
