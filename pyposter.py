@@ -1,4 +1,4 @@
-﻿import configparser, argparse, glob, nntplib, os, sys
+﻿import configparser, argparse, glob, nntplib, os, sys, math
 import ctypes, random, time, platform, zlib
 import nzb, preprocess
 
@@ -29,7 +29,7 @@ class usenetfile():
 			self.totalsegments = 1 # If size is below or equal to blocksize then there is only 1 segment.
 			self.nzbfile = self.nzb.addfile(self.poster, self.subject + ' - \"' + self.filename + '\" ' + str(self.filesize) + ' yEnc bytes')
 		else:
-			self.totalsegments = int(self.filesize / self.blocksize) + 1
+			self.totalsegments = math.ceil(self.filesize / self.blocksize)
 			self.nzbfile = self.nzb.addfile(self.poster, self.subject + ' - \"' + self.filename + '\" ' + 'yEnc ' + '(1' + '/' + str(self.totalsegments) + ')')
 
 		self.fd.seek(0,0) # Reset file pointer
@@ -40,9 +40,12 @@ class usenetfile():
 	def __iter__(self):
 		return self
 
-	def __gennextsegment(self):
+	def __next__(self):
 		data = bytearray(self.blocksize)
 		segmentsize = self.fd.readinto(data)
+		if segmentsize	== 0: # Check if we are on the last segment
+			raise StopIteration
+		self.currentsegment = self.currentsegment + 1
 		pcrc32 = zlib.crc32(data) & 0xffffffff # crc32 of this part
 		startpos = self.currentsegment * self.blocksize # Save the positions in the original file for this part so we can put it back together
 		endpos = startpos + segmentsize
@@ -69,12 +72,6 @@ class usenetfile():
 
 		article = usenetheader + yencheader + encodedoutput[0:encoded_size] + yenctrailer # Construct message
 		return article
-
-	def __next__(self):
-		if self.currentsegment == self.totalsegments: # Check if we are on the last segment
-			raise StopIteration
-		self.currentsegment = self.currentsegment + 1
-		return self.__gennextsegment()
 
 	def __base36(self, number): # Stole this function poster https://github.com/tonyseek/python-base36/blob/master/base36.py
 		alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
