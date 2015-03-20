@@ -89,13 +89,14 @@ def process(files, split, verbose, blocksize, desiredsize, outputdir):
 		os.makedirs(outputdir)
 
 	if split == True: # Should we split the files?
-		for filename in files: # Go through the list and do your stuff
-			print('Splitting file(s)...')
-			filelist = splitfiles(partsize, outputdir, filename, numberofparts)
-			print(filename + ' done.')
-			print('Creating par2 files... (This may take several minutes)')
-			print('Creating par2 for ' + filename + '...')
-			createpar2(blocksize, outputdir, filename + '.par', filename, verbose)
+		#for filename in files: # Go through the list and do your stuff
+		filename = files
+		print('Splitting file(s)...')
+		filelist = splitfiles(partsize, outputdir, filename, numberofparts)
+		print(filename + ' done.')
+		print('Creating par2 files... (This may take several minutes)')
+		print('Creating par2 for ' + filename + '...')
+		createpar2(blocksize, outputdir, filename + '.par', filename, verbose)
 	else:
 		print('Creating rar(s)...')
 		rarfile = os.path.splitext(files[0])[0] + '.rar'

@@ -107,7 +107,7 @@ def uploadfile(filename, subject, usenetserver):
 	ufile = usenetfile(filename, subject)
 	for article, segnr, tsegnr in ufile:
 		print('Uploading ' + os.path.split(filename)[1] + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
-		usenetserver.upload(article)
+		#usenetserver.upload(article)
 	print('Uploading ' + os.path.split(filename)[1] + '... Done!                         ')
 
 def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
@@ -168,22 +168,24 @@ def main():
 
 	# Setup usenet connection
 	usenetserver = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password)
-	usenetserver.connect() # Connect to server
-
-	tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
+	#usenetserver.connect() # Connect to server
 
 	if args.split == True: # Should split preprocessing be run?
-		for file in preprocess.process(allfiles, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
-			uploadfile(file, args.subject, usenetserver) # Go upload the files!
+		for filename in allfiles:
+			tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
+			for file in preprocess.process(filename, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
+				uploadfile(file, args.subject, usenetserver) # Go upload the files!
+			tempdir.cleanup()
 	elif args.rar == True: # Should rar preprocessing be run?
+		tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
 		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
+		tempdir.cleanup()
 	else: # Preprocessing is for losers. Just upload the file pls.
 		for file in allfiles:
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 
-	usenetserver.quit() # Remember to disconnect =)
-	tempdir.cleanup() # Cleanup the temporary directory
+	#usenetserver.quit() # Remember to disconnect =)
 
 	if args.nonzb == False:
 		nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
