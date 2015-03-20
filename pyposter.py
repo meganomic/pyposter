@@ -43,7 +43,7 @@ class usenetfile():
 	def __next__(self):
 		data = bytearray(self.blocksize)
 		segmentsize = self.fd.readinto(data)
-		if segmentsize	== 0: # Check if we are on the last segment
+		if segmentsize	== 0: # If no data is read that means it's done!
 			raise StopIteration
 
 		pcrc32 = zlib.crc32(data) & 0xffffffff # crc32 of this part
@@ -56,7 +56,7 @@ class usenetfile():
 		# Make sure id is fucking unique, using 4x random numbers + current time. converting it to base36 for the lulz
 		messageid = self.__base36(int(random.SystemRandom().randint(10000000, 99999999))) + self.__base36(int(random.SystemRandom().randint(10000000, 99999999))) + self.__base36(int(random.SystemRandom().randint(10000000, 99999999))) + self.__base36(int(time.time()*1000000)) + self.__base36(int(random.SystemRandom().randint(10000000, 99999999))) + '@' + self.poster.split(' ')[0].split('@')[1] # Create a message id using poster email and current posix time and some random numbers
 		self.nzbfile.addsegment(segmentsize, self.currentsegment, messageid)
-		
+
 		if self.totalsegments > 1: # The yenc specification differs for multipart files vs singlepart files
 			subject = self.subject + ' - \"' + self.filename + '\" ' + 'yEnc ' + '(' + str(self.currentsegment) + '/' + str(self.totalsegments) + ')'
 			yencheader = bytes('=ybegin part=' + str(self.currentsegment) + ' total=' + str(self.totalsegments) + ' line=128 size=' + str(segmentsize) + ' name=' + self.filename + '\r\n' +	'=ypart begin=' + str(startpos) + ' end=' + str(endpos) + '\r\n', 'utf-8')
@@ -123,10 +123,9 @@ def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
 
 def main():
 	# Need some commandline options
-	parser = argparse.ArgumentParser(usage='%(prog)s [options] subject newsgroup file(s)', description='Post files to usenet.')
+	parser = argparse.ArgumentParser(usage='%(prog)s [options] newsgroup file(s)', description='Post files to usenet.')
 	parser.add_argument('newsgroup', help = 'Newsgroup to post to')
-	parser.add_argument('files', metavar = 'file(s)', nargs = '+',
-						help = 'list of files to upload')
+	parser.add_argument('files', metavar = 'file(s)', nargs = '+', help = 'list of files to upload')
 	parser.add_argument('--subject', dest = 'subject', help = 'Subject line, uses filename if not set')
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
@@ -139,7 +138,7 @@ def main():
 
 	config = configparser.ConfigParser()
 	config.read(os.path.join(sys.path[0], 'pyposter.ini')) # Read the ini file
-	
+
 	if args.username == None: # Override ini file if commandline set
 		username = config['pyposter']['username']
 	else:

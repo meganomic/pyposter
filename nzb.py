@@ -10,11 +10,11 @@ class nzb_file:
 		self.subject = html.escape(subject, True) # Escape subject line since it contains quotes
 		self.time = str(int(time.time())) # The current time
 		self.segments = []
-	
+
 	def addsegment(self, segmentsize, segmentnr, messageid): # The segments of the file that was posted
 		self.segments.append((str(segmentsize), str(segmentnr), messageid)) # Add segment to list
 		return messageid # Return the Message-ID for use when posting
-	
+
 class nzb:
 	def __init__(self, poster, subject):
 		self.groups = []
@@ -37,13 +37,13 @@ class nzb:
 				f.write('    <file poster=\"' + file.poster + '\" date=\"' + file.time + '\" subject=\"' + file.subject + '\">\n')
 
 				f.write('        <groups>\n')
-				for group in self.groups: 
+				for group in self.groups:
 					f.write('            <group>' + group + '</group>\n')
 				f.write('        </groups>\n')
 
 				f.write('        <segments>\n')
 				for size, partnr, messageid in file.segments:
-					f.write('            <segment bytes=\"' + size + '\" number=\"' + partnr + '\">' + messageid + '</segment>\n') 
+					f.write('            <segment bytes=\"' + size + '\" number=\"' + partnr + '\">' + messageid + '</segment>\n')
 				f.write('        </segments>\n')
 				f.write('    </file>\n')
 			f.write('</nzb>\n')
