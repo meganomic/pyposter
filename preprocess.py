@@ -79,7 +79,7 @@ def createrars(rarsize, outputdir, outputfile, filelist):
 		return result
 
 def process(files, split, verbose, blocksize, desiredsize):
-	#desiredsize = 19200000 # Results in 30 parts, size default I guess
+	#desiredsize = 19200000 # Results in 30 parts, nice default I guess
 	#blocksize = 640000 # 5000 lines long * 128 chars wide
 	numberofparts = round(desiredsize / blocksize) # Number of parts to divide the file into
 	partsize = numberofparts * blocksize # Size of part after splitting original file

@@ -17,14 +17,10 @@ class usenet:
 	def post(self, article):
 		self.server.post(article) # Post the article to usenet
 
-def upload_file(filename, subject, usenetserver):
+def uploadfile(filename, subject, usenetserver):
 	ufile = stuffs.usenetfile(filename, subject)
-	i = 1
 	for article in ufile:
-		with open('test' + str(i) + '.txt', 'wb') as f:
-			f.write(article)
-		i = i + 1
-		#usenetserver.upload(article)
+		usenetserver.upload(article)
 
 
 def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
@@ -85,19 +81,19 @@ def main():
 
 	# Setup usenet connection
 	usenetserver = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password)
-	#usenetserver.connect() # Connect to server
+	usenetserver.connect() # Connect to server
 
 	if args.split == True: # Should split preprocessing be run?
 		for file in preprocess.process(allfiles, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
-			upload_file(file, args.subject, usenetserver) # Go upload the files!
+			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 	elif args.rar == True: # Should rar preprocessing be run?
 		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize'])):
-			upload_file(file, args.subject, usenetserver) # Go upload the files!
+			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 	else: # Preprocessing is for losers. Just upload the file pls.
 		for file in allfiles:
-			upload_file(file, args.subject, usenetserver) # Go upload the files!
+			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 
-	#usenetserver.quit() # Remember to disconnect =)
+	usenetserver.quit() # Remember to disconnect =)
 
 	if args.nonzb == False:
 		nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
