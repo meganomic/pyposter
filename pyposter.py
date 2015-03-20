@@ -76,7 +76,7 @@ class usenetfile():
 
 		article = usenetheader + yencheader + encodedoutput[0:encoded_size] + yenctrailer # Construct message
 
-		return article # Return fully formed usenet article
+		return article, self.currentsegment, self.totalsegments # Return fully formed usenet article
 
 	def __base36(self, number): # Stole this function poster https://github.com/tonyseek/python-base36/blob/master/base36.py
 		alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
@@ -105,8 +105,10 @@ class usenet:
 
 def uploadfile(filename, subject, usenetserver):
 	ufile = usenetfile(filename, subject)
-	for article in ufile:
+	for article, segnr, tsegnr in ufile:
+		print('Uploading ' + filename + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
 		usenetserver.upload(article)
+	print('Uploading ' + filename + '... Done!                         ')
 
 def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
 	escapedfilename = []
