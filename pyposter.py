@@ -107,7 +107,7 @@ def uploadfile(filename, subject, usenetserver):
 	ufile = usenetfile(filename, subject)
 	for article, segnr, tsegnr in ufile:
 		print('Uploading ' + os.path.split(filename)[1] + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
-		#usenetserver.upload(article)
+		usenetserver.upload(article)
 	print('Uploading ' + os.path.split(filename)[1] + '... Done!                         ')
 
 def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
@@ -168,7 +168,7 @@ def main():
 
 	# Setup usenet connection
 	usenetserver = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password)
-	#usenetserver.connect() # Connect to server
+	usenetserver.connect() # Connect to server
 
 	if args.split == True: # Should split preprocessing be run?
 		for filename in allfiles:
@@ -185,7 +185,7 @@ def main():
 		for file in allfiles:
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 
-	#usenetserver.quit() # Remember to disconnect =)
+	usenetserver.quit() # Remember to disconnect =)
 
 	if args.nonzb == False:
 		nzbs.save(args.subject + '.nzb') # Save the nzb file using subject as name
