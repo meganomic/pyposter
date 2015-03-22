@@ -9,7 +9,7 @@ class usenetfile():
 	nzb = None # Nzb handler
 	blocksize = None
 	if platform.system() == 'Windows': # Check if it's windows
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyenc.dll'))
+		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencmmx.dll'))
 	else:
 		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyenc.so')) # Assume linux if not
 
@@ -22,7 +22,7 @@ class usenetfile():
 		self.filesize = None
 		self.fd = open(filename, 'rb') # I like to live on the edge
 
-		self.crc32 = zlib.crc32(self.fd.read()) & 0xffffffff # Get crc32 of entire file for yenc specification
+		self.crc32 = 0
 		self.fd.seek(0, 2) # Seek to EOF
 		self.filesize = self.fd.tell() # Size of file
 		if self.filesize <= self.blocksize: # Calculate number of segments
@@ -46,6 +46,7 @@ class usenetfile():
 		if segmentsize	== 0: # If no data is read that means it's done!
 			raise StopIteration
 
+		self.crc32 = zlib.crc32(data[0:segmentsize], self.crc32)# & 0xffffffff # d805ec57
 		pcrc32 = zlib.crc32(data) & 0xffffffff # crc32 of this part
 		startpos = self.currentsegment * self.blocksize # Save the positions in the original file for this part so we can put it back together
 		endpos = startpos + segmentsize
@@ -108,6 +109,8 @@ def uploadfile(filename, subject, usenetserver):
 	for article, segnr, tsegnr in ufile:
 		print('Uploading ' + os.path.split(filename)[1] + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
 		usenetserver.upload(article)
+		#with open('rar2.txt', 'wb') as f:
+			#f.write(article)
 	print('Uploading ' + os.path.split(filename)[1] + '... Done!                         ')
 
 def escapefilename(filename): # Stupid glob. I don't want [ or ] to be special
@@ -175,12 +178,12 @@ def main():
 			tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
 			for file in preprocess.process(filename, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
 				uploadfile(file, args.subject, usenetserver) # Go upload the files!
-			tempdir.cleanup()
+			tempdir.cleanup() # Cleanup temporary directory
 	elif args.rar == True: # Should rar preprocessing be run?
 		tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
 		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
-		tempdir.cleanup()
+		tempdir.cleanup() # Cleanup temporary directory
 	else: # Preprocessing is for losers. Just upload the file pls.
 		for file in allfiles:
 			uploadfile(file, args.subject, usenetserver) # Go upload the files!
