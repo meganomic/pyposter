@@ -89,7 +89,6 @@ def process(files, split, verbose, blocksize, desiredsize, outputdir):
 		os.makedirs(outputdir)
 
 	if split == True: # Should we split the files?
-		#for filename in files: # Go through the list and do your stuff
 		filename = files
 		print('Splitting file(s)...')
 		filelist = splitfiles(partsize, outputdir, filename, numberofparts)
