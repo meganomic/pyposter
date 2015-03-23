@@ -10,7 +10,7 @@ encode:
 
 .encodeset:
 	cmp r8, 8
-	jle .lasteight	
+	jle .lasteight ; The last 8 or less characters need special treatment	
 	movq mm0, [rcx] ; Move character from memory to register
 	mov r10, const1
 	movq mm1, [r10]
@@ -47,9 +47,58 @@ encode:
 	jne .specialchar
 	jmp .writesettobuffer
 
+.scmulti:
+	inc r13
+	movq rax, mm0
+	;mov r10b, al ; Move character from memory to register
+	cmp al, 0 ; Check for illegal characters
+	je .scmulti2
+	cmp al, 10
+	je .scmulti2
+	cmp al, 13
+	je .scmulti2
+	cmp al, 61
+	je .scmulti2
+
+.scmulti2:
+	add al, 64 ; This time we add 64
+	and al, 255 ; ultra fast modulus!! again
+	mov byte [rdx], 61 ; Add escape character
+	add rdx, 1 ; increase output array pointer
+	inc r9 ; Increase size of output
+	inc r11 ; Increase line length
+	mov byte [rdx], al ; Move encoded byte to output array
+	add rdx, 1 ; increase output array pointer
+	inc r9 ; Increase size of output
+	inc r11 ; Increase line length
+	cmp r11, 127
+	jge .scnewlinemulti
+	cmp r13, 7
+	je .nextset
+	jmp .scnextcharmulti
+
+.scnextcharmulti:
+	rol rax, 8
+	dec r8
+	jnz .scmulti
+	jmp .exitprogram
+
+.scnewlinemulti:
+	mov byte [rdx], 13 ; \r
+	add rdx, 1 ; increase output array pointer
+	inc r9 ; Increase size of output
+	mov byte [rdx], 10 ; \n
+	add rdx, 1 ; increase output array pointer
+	inc r9 ; Increase size of output
+	xor r11, r11
+	cmp r13, 8
+	je .nextset
+	jmp .scnextcharmulti
+
 .specialchar:
 	inc r13
 	mov r10b, byte [rcx] ; Move character from memory to register
+	rol rax, 8
 	add r10b, 42 ; Add 42 before modulus
 	and r10b, 255 ; ultra fast modulus!!
 	cmp r10b, 0 ; Check for illegal characters
@@ -84,7 +133,7 @@ encode:
 	inc r11 ; Increase line length
 	cmp r11, 127
 	jge .scnewline
-	cmp r13, 7
+	cmp r13, 8
 	je .nextset
 	jmp .scnextchar
 
@@ -113,7 +162,11 @@ encode:
 	jge .newline
 	jmp .encodeset ; Encode another 8 bytes
 
+.lasteight:
+	jmp .specialchar
+
 .nextset:
+	xor r13, r13
 	add rcx, 1
 	dec r8
 	jnz .encodeset
@@ -128,9 +181,6 @@ encode:
 	inc r9 ; Increase size of output
 	xor r11, r11
 	jmp .encodeset
-
-.lasteight:
-	jmp .specialchar
 
 .exitprogram:
 	mov rax, r9 ; Return output size
