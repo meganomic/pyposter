@@ -4,7 +4,9 @@ GLOBAL encode
 section .code bits 64
 
 encode:
-	xor r9, r9 ; Make sure counter register i zero
+	push r12 ; save r12 and r13, I need those registers for stuff
+	push r13
+	xor r9, r9
 	xor r11, r11
 	xor r13, r13
 
@@ -48,7 +50,7 @@ encode:
 	jmp .writesettobuffer
 
 .scmulti:
-	inc r13
+	add r13, 1
 	movq rax, mm0
 	;mov r10b, al ; Move character from memory to register
 	cmp al, 0 ; Check for illegal characters
@@ -65,12 +67,12 @@ encode:
 	and al, 255 ; ultra fast modulus!! again
 	mov byte [rdx], 61 ; Add escape character
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
-	inc r11 ; Increase line length
+	add r9, 1 ; Increase size of output
+	add r11, 1 ; Increase line length
 	mov byte [rdx], al ; Move encoded byte to output array
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
-	inc r11 ; Increase line length
+	add r9, 1 ; Increase size of output
+	add r11, 1 ; Increase line length
 	cmp r11, 127
 	jge .scnewlinemulti
 	cmp r13, 7
@@ -79,24 +81,24 @@ encode:
 
 .scnextcharmulti:
 	rol rax, 8
-	dec r8
+	sub r8, 1
 	jnz .scmulti
 	jmp .exitprogram
 
 .scnewlinemulti:
 	mov byte [rdx], 13 ; \r
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
+	add r9, 1 ; Increase size of output
 	mov byte [rdx], 10 ; \n
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
+	add r9, 1 ; Increase size of output
 	xor r11, r11
 	cmp r13, 8
 	je .nextset
 	jmp .scnextcharmulti
 
 .specialchar:
-	inc r13
+	add r13, 1
 	mov r10b, byte [rcx] ; Move character from memory to register
 	rol rax, 8
 	add r10b, 42 ; Add 42 before modulus
@@ -116,21 +118,21 @@ encode:
 	and r10b, 255 ; ultra fast modulus!! again
 	mov byte [rdx], 61 ; Add escape character
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
-	inc r11 ; Increase line length
+	add r9, 1 ; Increase size of output
+	add r11, 1 ; Increase line length
 	jmp .scoutputencoded
 
 .scnextchar:
 	add rcx, 1
-	dec r8
+	sub r8, 1
 	jnz .specialchar
 	jmp .exitprogram
 
 .scoutputencoded:
 	mov byte [rdx], r10b ; Move encoded byte to output array
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
-	inc r11 ; Increase line length
+	add r9, 1 ; Increase size of output
+	add r11, 1 ; Increase line length
 	cmp r11, 127
 	jge .scnewline
 	cmp r13, 8
@@ -140,10 +142,10 @@ encode:
 .scnewline:
 	mov byte [rdx], 13 ; \r
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
+	add r9, 1 ; Increase size of output
 	mov byte [rdx], 10 ; \n
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
+	add r9, 1 ; Increase size of output
 	xor r11, r11
 	cmp r13, 8
 	je .nextset
@@ -168,23 +170,25 @@ encode:
 .nextset:
 	xor r13, r13
 	add rcx, 1
-	dec r8
+	sub r8, 1
 	jnz .encodeset
 	jmp .exitprogram
 
 .newline:
 	mov byte [rdx], 13 ; \r
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
+	add r9, 1 ; Increase size of output
 	mov byte [rdx], 10 ; \n
 	add rdx, 1 ; increase output array pointer
-	inc r9 ; Increase size of output
+	add r9, 1 ; Increase size of output
 	xor r11, r11
 	jmp .encodeset
 
 .exitprogram:
 	mov rax, r9 ; Return output size
 	emms
+	pop r13 ; restore some registers to their original state
+	pop r12
 	ret
 
 section .data
