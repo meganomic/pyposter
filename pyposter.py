@@ -9,7 +9,7 @@ class usenetfile():
 	nzb = None # Nzb handler
 	blocksize = None
 	if platform.system() == 'Windows': # Check if it's windows
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencmmx.dll'))
+		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyenc.dll'))
 	else:
 		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyenc.so')) # Assume linux if not
 
@@ -40,6 +40,9 @@ class usenetfile():
 	def __iter__(self):
 		return self
 
+	def bajsa(self, data, encodedoutput, segmentsize):
+		return self.cyenc.encode(data, encodedoutput, segmentsize) # Encode to yenc using external dll
+
 	def __next__(self):
 		data = bytearray(self.blocksize)
 		segmentsize = self.fd.readinto(data)
@@ -68,12 +71,13 @@ class usenetfile():
 			yenctrailer = bytes('\r\n=yend size=' + str(self.filesize) + ' crc32=' + str(hex(self.crc32))[2:10], 'utf-8')
 
 		# Usenet article header
-		usenetheader = bytes('poster: ' +  self.poster + '\r\nNewsgroups: ' + ','.join(self.newsgroups).rstrip(',') + '\r\nSubject: ' + self.subject + '\r\nMessage-ID: <' + messageid + '>\r\n\r\n', 'utf-8')
+		usenetheader = bytes('From: ' +  self.poster + '\r\nNewsgroups: ' + ','.join(self.newsgroups).rstrip(',') + '\r\nSubject: ' + subject + '\r\nMessage-ID: <' + messageid + '>\r\n\r\n', 'utf-8')
 
 		# Encode the data using yenc specification
 		self.cyenc.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char), ctypes.c_int] # Convert to these types when calling dll function pls
 		encodedoutput = ctypes.create_string_buffer(self.blocksize*2) # Create a big buffer so we don't run out of space
-		encoded_size = self.cyenc.encode(ctypes.create_string_buffer(bytes(data)), encodedoutput, segmentsize) # Encode to yenc using external dll
+		#encoded_size = self.cyenc.encode(ctypes.create_string_buffer(bytes(data)), encodedoutput, segmentsize) # Encode to yenc using external dll
+		encoded_size = self.bajsa(ctypes.create_string_buffer(bytes(data)), encodedoutput, segmentsize)
 
 		article = usenetheader + yencheader + encodedoutput[0:encoded_size] + yenctrailer # Construct message
 
@@ -102,14 +106,14 @@ class usenet:
 		self.server.quit() # Gotta close down that connection
 
 	def post(self, article):
-		self.server.post(article) # Post the article to usenet
+		return self.server.post(article) # Post the article to usenet
 
 def uploadfile(filename, subject, usenetserver):
 	ufile = usenetfile(filename, subject)
 	for article, segnr, tsegnr in ufile:
 		print('Uploading ' + os.path.split(filename)[1] + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
-		usenetserver.upload(article)
-		#with open('rar2.txt', 'wb') as f:
+		usenetserver.post(article)
+		#with open('rar' + str(segnr) + '.txt', 'wb') as f:
 			#f.write(article)
 	print('Uploading ' + os.path.split(filename)[1] + '... Done!                         ')
 
