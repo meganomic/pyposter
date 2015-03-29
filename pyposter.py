@@ -1,5 +1,6 @@
 ﻿import configparser, argparse, glob, nntplib, os, sys, math
 import ctypes, random, time, platform, zlib, tempfile
+from email.utils import formatdate
 import nzb, preprocess
 
 class usenetfile():
@@ -22,7 +23,9 @@ class usenetfile():
 		self.filesize = None
 		self.fd = open(filename, 'rb') # I like to live on the edge
 
-		self.crc32 = 0
+		print('Calculating crc32...', end='\r')
+		self.crc32 = zlib.crc32(self.fd.read()) & 0xffffffff # (B5C3DDFF -> 167FDD8B)
+		print('Calculating crc32... Done!')
 		self.fd.seek(0, 2) # Seek to EOF
 		self.filesize = self.fd.tell() # Size of file
 		if self.filesize <= self.blocksize: # Calculate number of segments
@@ -49,10 +52,10 @@ class usenetfile():
 		if segmentsize	== 0: # If no data is read that means it's done!
 			raise StopIteration
 
-		self.crc32 = zlib.crc32(data[0:segmentsize], self.crc32)# & 0xffffffff # d805ec57
-		pcrc32 = zlib.crc32(data) & 0xffffffff # crc32 of this part
-		startpos = self.currentsegment * self.blocksize # Save the positions in the original file for this part so we can put it back together
-		endpos = startpos + segmentsize
+		pcrc32 = zlib.crc32(data[0:segmentsize]) & 0xffffffff # crc32 of this part
+
+		startpos = self.fd.tell() - segmentsize + 1 #self.currentsegment * self.blocksize # Save the positions in the original file for this part so we can put it back together
+		endpos = self.fd.tell() #startpos + segmentsize
 
 		# Yes this is correct
 		self.currentsegment = self.currentsegment + 1 # Advance the segment counter
