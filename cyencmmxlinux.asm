@@ -1,8 +1,7 @@
-GLOBAL encode
-   EXPORT encode
+default rel
 
-section .code bits 64
-
+section .text ;bits 64
+global encode
 encode:
 	push r12 ; save r12 and r13, I need those registers for stuff
 	push r13
