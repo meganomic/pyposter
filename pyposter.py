@@ -24,7 +24,11 @@ class usenetfile():
 		self.fd = open(filename, 'rb') # I like to live on the edge
 
 		print('Calculating crc32...', end='\r')
-		self.crc32 = zlib.crc32(self.fd.read()) & 0xffffffff # (B5C3DDFF -> 167FDD8B)
+		while True:
+			data = self.fd.read(655360)
+			if not data:
+				break
+			self.crc32 = zlib.crc32(data) & 0xffffffff # (B5C3DDFF -> 167FDD8B)
 		print('Calculating crc32... Done!')
 		self.fd.seek(0, 2) # Seek to EOF
 		self.filesize = self.fd.tell() # Size of file
@@ -115,7 +119,7 @@ def uploadfile(filename, subject, usenetserver):
 	ufile = usenetfile(filename, subject)
 	for article, segnr, tsegnr in ufile:
 		print('Uploading ' + os.path.split(filename)[1] + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
-		usenetserver.post(article)
+		#usenetserver.post(article)
 		#with open('rar' + str(segnr) + '.txt', 'wb') as f:
 			#f.write(article)
 	print('Uploading ' + os.path.split(filename)[1] + '... Done!                         ')
