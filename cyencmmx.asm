@@ -11,6 +11,7 @@ encode:
 	xor r9, r9
 	xor r11, r11
 	xor r13, r13
+	sub r8, 1
 	
 	movq mm6, [special4]
 	movq mm5, [special3]
@@ -22,7 +23,6 @@ encode:
 	jle .lasteight ; The last 8 or less characters need special treatment
 	movq mm0, [rcx] ; Move character from memory to register
 	paddb mm0, [const1] ; + 42
-	;pand mm0, [const2] ; modulus 256
 
 	movq mm7, mm0 ; temporary copy
 	pcmpeqb mm7, mm3
@@ -44,6 +44,8 @@ encode:
 	movq r10, mm7
 	cmp r10, 0
 	jne .scmultientry
+	cmp r11, 119
+	jge .scmultientry ; Need special handling if we go over line length limit
 	jmp .writesettobuffer
 
 .scmultientry:
@@ -64,7 +66,6 @@ encode:
 
 .scmulti2:
 	add bl, 64 ; This time we add 64
-	and bl, 255 ; ultra fast modulus!! again
 	mov byte [rdx], 61 ; Add escape character
 	add rdx, 1 ; increase output array pointer
 	add r9, 1 ; Increase size of output
@@ -76,7 +77,7 @@ encode:
 	add rdx, 1 ; increase output array pointer
 	add r9, 1 ; Increase size of output
 	add r11, 1 ; Increase line length
-	ror rax, 8
+	rol rax, 8
 	sub r8, 1
 	jz .exitprogram
 	cmp r11, 127
@@ -106,7 +107,6 @@ encode:
 	add r13, 1
 	mov r10b, byte [rcx] ; Move character from memory to register
 	add r10b, 42 ; Add 42 before modulus
-	and r10b, 255 ; ultra fast modulus!!
 	cmp r10b, 0 ; Check for illegal characters
 	je .sc
 	cmp r10b, 10
@@ -119,7 +119,6 @@ encode:
 
 .sc:
 	add r10b, 64 ; This time we add 64
-	and r10b, 255 ; ultra fast modulus!! again
 	mov byte [rdx], 61 ; Add escape character
 	add rdx, 1 ; increase output array pointer
 	add r9, 1 ; Increase size of output
@@ -139,7 +138,7 @@ encode:
 	add r11, 1 ; Increase line length
 	cmp r11, 127
 	jge .scnewline
-	cmp r13, 8
+	cmp r13, 7
 	je .nextset
 	jmp .scnextchar
 
@@ -195,4 +194,3 @@ special2:	dq 0x0D0A003D0D0A003D
 special3:	dq 0x0A003D0D0A003D0D
 special4:	dq 0x003D0D0A003D0D0A
 const1:		dq 0x2A2A2A2A2A2A2A2A
-const2:		dq 0xFFFFFFFFFFFFFFFF
