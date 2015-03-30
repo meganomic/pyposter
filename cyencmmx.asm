@@ -6,12 +6,14 @@ section .code bits 64
 encode:
 	push r12 ; save r12 and r13, I need those registers for stuff
 	push r13
+	push r14
 	push rbx
+	push rdi
 	xor rbx, rbx
 	xor r9, r9
 	xor r11, r11
 	xor r13, r13
-	;sub r8, 1
+	mov r14, rcx ; need rcx for scasb so move the pointer
 	
 	movq mm6, [special4]
 	movq mm5, [special3]
@@ -20,28 +22,24 @@ encode:
 
 .encodeset:
 	cmp r8, 8
-	jle .lasteight ; The last 8 or less characters need special treatment
-	movq mm0, [rcx] ; Move character from memory to register
+	jle .specialchar ; The last 8 or less characters need special treatment
+	movq mm0, [r14] ; Move character from memory to register
 	paddb mm0, [const1] ; + 42
 
+	pxor mm1, mm1
 	movq mm7, mm0 ; temporary copy
 	pcmpeqb mm7, mm3
-	movq r10, mm7
-	cmp r10, 0
-	jne .scmultientry
+	por mm1, mm7
 	movq mm7, mm0
 	pcmpeqb mm7, mm4
-	movq r10, mm7
-	cmp r10, 0
-	jne .scmultientry
+	por mm1, mm7
 	movq mm7, mm0
 	pcmpeqb mm7, mm5
-	movq r10, mm7
-	cmp r10, 0
-	jne .scmultientry
+	por mm1, mm7
 	movq mm7, mm0
 	pcmpeqb mm7, mm6
-	movq r10, mm7
+	por mm1, mm7
+	movq r10, mm1
 	cmp r10, 0
 	jne .scmultientry
 	cmp r11, 119
@@ -53,27 +51,14 @@ encode:
 	
 .scmulti:
 	add r13, 1
-	mov bl, al
-	cmp bl, 0 ; Check for illegal characters
-	je .scmulti2
-	cmp bl, 10
-	je .scmulti2
-	cmp bl, 13
-	je .scmulti2
-	cmp bl, 61
-	je .scmulti2
-	jmp .scnextcharmulti
-
-.scmulti2:
-	add bl, 64 ; This time we add 64
-	mov byte [rdx], 61 ; Add escape character
-	add rdx, 1 ; increase output array pointer
-	add r9, 1 ; Increase size of output
-	add r11, 1 ; Increase line length
-	jmp .scnextcharmulti
+	mov rdi, scmulticmp
+	mov rcx, 4
+	repnz scasb
+	jz .scmulti2
+	;jmp .scnextcharmulti
 
 .scnextcharmulti:
-	mov byte [rdx], bl ; Move encoded byte to output array
+	mov byte [rdx], al ; Move encoded byte to output array
 	add rdx, 1 ; increase output array pointer
 	add r9, 1 ; Increase size of output
 	add r11, 1 ; Increase line length
@@ -86,9 +71,17 @@ encode:
 	je .nextset
 	jmp .scmulti
 
+.scmulti2:
+	add al, 64 ; This time we add 64
+	mov byte [rdx], 61 ; Add escape character
+	add rdx, 1 ; increase output array pointer
+	add r9, 1 ; Increase size of output
+	add r11, 1 ; Increase line length
+	jmp .scnextcharmulti
+
 .nextset:
 	xor r13, r13
-	add rcx, 8
+	add r14, 8
 	jmp .encodeset
 
 .scnewlinemulti:
@@ -105,7 +98,7 @@ encode:
 
 .specialchar:
 	add r13, 1
-	mov r10b, byte [rcx] ; Move character from memory to register
+	mov r10b, byte [r14] ; Move character from memory to register
 	add r10b, 42 ; Add 42 before modulus
 	cmp r10b, 0 ; Check for illegal characters
 	je .sc
@@ -126,7 +119,7 @@ encode:
 	jmp .scoutputencoded
 
 .scnextchar:
-	add rcx, 1
+	add r14, 1
 	sub r8, 1
 	jnz .specialchar
 	jmp .exitprogram
@@ -157,7 +150,7 @@ encode:
 .writesettobuffer:
 	movq [rdx], mm0 ; Move encoded byte to output array
 	add rdx, 8 ; increase output array pointer
-	add rcx, 8 ; increase input pointer
+	add r14, 8 ; increase input pointer
 	add r9, 8 ; Increase size of output
 	add r11, 8 ; Increase line length
 	sub r8, 8 ; Done encoding 8 bytes
@@ -166,9 +159,6 @@ encode:
 	cmp r11, 127
 	jge .newline
 	jmp .encodeset ; Encode another 8 bytes
-
-.lasteight:
-	jmp .specialchar
 
 .newline:
 	mov byte [rdx], 13 ; \r
@@ -183,12 +173,15 @@ encode:
 .exitprogram:
 	mov rax, r9 ; Return output size
 	emms
+	pop rdi
 	pop rbx
+	pop r14
 	pop r13 ; restore some registers to their original state
 	pop r12
 	ret
 
 section .data
+scmulticmp:	dd 0x3D0D0A00
 special1:	dq 0x3D0D0A003D0D0A00
 special2:	dq 0x0D0A003D0D0A003D
 special3:	dq 0x0A003D0D0A003D0D
