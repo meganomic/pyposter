@@ -11,7 +11,7 @@ encode:
 	xor r9, r9
 	xor r11, r11
 	xor r13, r13
-	sub r8, 1
+	;sub r8, 1
 	
 	movq mm6, [special4]
 	movq mm5, [special3]
@@ -77,7 +77,7 @@ encode:
 	add rdx, 1 ; increase output array pointer
 	add r9, 1 ; Increase size of output
 	add r11, 1 ; Increase line length
-	rol rax, 8
+	ror rax, 8
 	sub r8, 1
 	jz .exitprogram
 	cmp r11, 127
@@ -138,8 +138,8 @@ encode:
 	add r11, 1 ; Increase line length
 	cmp r11, 127
 	jge .scnewline
-	cmp r13, 7
-	je .nextset
+	cmp r13, 8
+	je .exitprogram
 	jmp .scnextchar
 
 .scnewline:
@@ -151,7 +151,7 @@ encode:
 	add r9, 1 ; Increase size of output
 	xor r11, r11
 	cmp r13, 8
-	je .nextset
+	je .exitprogram
 	jmp .scnextchar
 
 .writesettobuffer:
