@@ -10,9 +10,9 @@ class usenetfile():
 	nzb = None # Nzb handler
 	blocksize = None
 	if platform.system() == 'Windows': # Check if it's windows
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencmmx.dll'))
+		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencsse.dll'))
 	else:
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyenc.so')) # Assume linux if not
+		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencmmx.so')) # Assume linux if not
 
 	def __init__(self, filename, subject):
 		self.filename = filename
@@ -120,7 +120,7 @@ def uploadfile(filename, subject, usenetserver):
 	for article, segnr, tsegnr in ufile:
 		print('Uploading ' + os.path.split(filename)[1] + '... ' + str(segnr) + ' of ' + str(tsegnr), end='\r')
 		usenetserver.post(article)
-		#with open('rarmmx' + str(segnr) + '.txt', 'wb') as f:
+		#with open('rar' + str(segnr) + '.txt', 'wb') as f:
 			#f.write(article)
 	print('Uploading ' + os.path.split(filename)[1] + '... Done!                         ')
 
