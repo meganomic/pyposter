@@ -10,9 +10,9 @@ class usenetfile():
 	nzb = None # Nzb handler
 	blocksize = None
 	if platform.system() == 'Windows': # Check if it's windows
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencsse.dll'))
+		cyenc = ctypes.CDLL(os.path.join(os.path.join(sys.path[0], 'cyenc'), 'cyencsse.dll'))
 	else:
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencmmx.so')) # Assume linux if not
+		cyenc = ctypes.CDLL(os.path.join(os.path.join(sys.path[0], 'cyenc'), 'cyencmmx.so')) # Assume linux if not
 
 	def __init__(self, filename, subject):
 		self.filename = filename
