@@ -9,12 +9,11 @@ align 16
 encode:
 	push r12 ; save r12 and r13, I need those registers for stuff
 	push r13
-	push r14
 	push rbx
 	xor rbx, rbx
 	xor r9, r9
 	xor r11, r11
-	
+
 	movdqa xmm6, [special4]
 	movdqa xmm5, [special3]
 	movdqa xmm4, [special2]
@@ -54,7 +53,6 @@ encode:
 	add r9, 16 ; Increase size of output
 	add r11, 16 ; Increase line length
 	sub r8, 16 ; Done encoding 16 bytes
-	jle .exitprogram ; If it's done the exit
 	jmp .encodeset ; Encode another 8 bytes
 
 .scmultientry:
@@ -74,7 +72,6 @@ encode:
 	je .scmulti2
 	cmp al, 61
 	je .scmulti2
-	;jmp .scnextcharmulti
 
 .scnextcharmulti:
 	mov byte [rdx], al ; Move encoded byte to output array
@@ -103,16 +100,24 @@ encode:
 	jmp .encodeset
 
 .scnewlinemulti:
-	mov byte [rdx], 13 ; \r
-	add rdx, 1 ; increase output array pointer
-	add r9, 1 ; Increase size of output
-	mov byte [rdx], 10 ; \n
-	add rdx, 1 ; increase output array pointer
-	add r9, 1 ; Increase size of output
+	mov word [rdx], 0x0A0D ; \r\n
+	add rdx, 2 ; increase output array pointer
+	add r9, 2 ; Increase size of output
 	xor r11, r11
 	cmp r13, 8
 	je .scmultientry
 	jmp .scmulti
+
+.scnewline:
+	mov word [rdx], 0x0A0D ; \r\n
+	add rdx, 2 ; increase output array pointer
+	add r9, 2 ; Increase size of output
+	xor r11, r11
+
+.scnextchar:
+	add rcx, 1
+	sub r8, 1
+	jz .exitprogram
 
 .specialchar:
 	add r13, 1
@@ -134,13 +139,6 @@ encode:
 	add rdx, 1 ; increase output array pointer
 	add r9, 1 ; Increase size of output
 	add r11, 1 ; Increase line length
-	jmp .scoutputencoded
-
-.scnextchar:
-	add rcx, 1
-	sub r8, 1
-	jnz .specialchar
-	jmp .exitprogram
 
 .scoutputencoded:
 	mov byte [rdx], r10b ; Move encoded byte to output array
@@ -149,36 +147,11 @@ encode:
 	add r11, 1 ; Increase line length
 	cmp r11, 127
 	jge .scnewline
-	cmp r13, 16
-	je .exitprogram
 	jmp .scnextchar
-
-.scnewline:
-	mov byte [rdx], 13 ; \r
-	add rdx, 1 ; increase output array pointer
-	add r9, 1 ; Increase size of output
-	mov byte [rdx], 10 ; \n
-	add rdx, 1 ; increase output array pointer
-	add r9, 1 ; Increase size of output
-	xor r11, r11
-	cmp r13, 16
-	je .exitprogram
-	jmp .scnextchar
-
-.newline:
-	mov byte [rdx], 13 ; \r
-	add rdx, 1 ; increase output array pointer
-	add r9, 1 ; Increase size of output
-	mov byte [rdx], 10 ; \n
-	add rdx, 1 ; increase output array pointer
-	add r9, 1 ; Increase size of output
-	xor r11, r11
-	jmp .encodeset
 
 .exitprogram:
 	mov rax, r9 ; Return output size
 	pop rbx
-	pop r14
 	pop r13 ; restore some registers to their original state
 	pop r12
 	ret
