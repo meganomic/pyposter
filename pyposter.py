@@ -12,7 +12,7 @@ class usenetfile():
 	if platform.system() == 'Windows': # Check if it's windows
 		cyenc = ctypes.CDLL(os.path.join(os.path.join(sys.path[0], 'cyenc'), 'cyencsse.dll'))
 	else:
-		cyenc = ctypes.CDLL(os.path.join(os.path.join(sys.path[0], 'cyenc'), 'cyencmmx.so')) # Assume linux if not
+		cyenc = ctypes.CDLL(os.path.join(os.path.join(sys.path[0], 'cyenc'), 'cyencsse.so')) # Assume linux if not
 
 	def __init__(self, filename, subject):
 		self.filename = filename
@@ -47,9 +47,6 @@ class usenetfile():
 	def __iter__(self):
 		return self
 
-	def bajsa(self, data, encodedoutput, segmentsize):
-		return self.cyenc.encode(data, encodedoutput, segmentsize) # Encode to yenc using external dll
-
 	def __next__(self):
 		data = bytearray(self.blocksize)
 		segmentsize = self.fd.readinto(data)
@@ -83,8 +80,7 @@ class usenetfile():
 		# Encode the data using yenc specification
 		self.cyenc.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char), ctypes.c_int] # Convert to these types when calling dll function pls
 		encodedoutput = ctypes.create_string_buffer(self.blocksize*2) # Create a big buffer so we don't run out of space
-		#encoded_size = self.cyenc.encode(ctypes.create_string_buffer(bytes(data)), encodedoutput, segmentsize) # Encode to yenc using external dll
-		encoded_size = self.bajsa(ctypes.create_string_buffer(bytes(data)), encodedoutput, segmentsize)
+		encoded_size = self.cyenc.encode(ctypes.create_string_buffer(bytes(data)), encodedoutput, segmentsize) # Encode to yenc using external dll
 
 		article = usenetheader + yencheader + encodedoutput[0:encoded_size] + yenctrailer # Construct message
 
