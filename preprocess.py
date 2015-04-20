@@ -45,10 +45,10 @@ def createpar2(blocksize, outputdir, outputfile, filelist, verbose):
 
 	if verbose:
 		return subprocess.call(par2_exec + ' c -r20 -s' + str(blocksize) + ' \"' +
-							os.path.join(outputdir, outputfile) + '\" ' + subprocess.list2cmdline(filelist))
+							os.path.join(outputdir, outputfile) + '\" ' + subprocess.list2cmdline(filelist), shell=True)
 	else:
 		return subprocess.call(par2_exec + ' c -r20 -s' + str(blocksize) + ' \"' +
-							os.path.join(outputdir, outputfile) + '\" ' + subprocess.list2cmdline(filelist), stdout=subprocess.DEVNULL)
+							os.path.join(outputdir, outputfile) + '\" ' + subprocess.list2cmdline(filelist), stdout=subprocess.DEVNULL, shell=True)
 
 def createrars(rarsize, outputdir, outputfile, filelist):
 	if platform.system() == 'Windows': # Check if it's windows
@@ -58,7 +58,7 @@ def createrars(rarsize, outputdir, outputfile, filelist):
 
 	rar = subprocess.Popen(rar_exec + ' a -m0 -v' + \
 							str(rarsize) + 'b -mt2 \"' + os.path.join(outputdir, outputfile) + '\" ' + \
-							subprocess.list2cmdline(filelist), stdout=subprocess.PIPE)
+							subprocess.list2cmdline(filelist), stdout=subprocess.PIPE, shell=True)
 	stdout = rar.communicate()[0]
 
 	result = re.findall(".*?Creating archive (.*?.rar).*?", str(stdout)) # Parse the output to get the filenames of created rars
@@ -85,8 +85,8 @@ def process(files, split, verbose, blocksize, desiredsize, outputdir):
 	partsize = numberofparts * blocksize # Size of part after splitting original file
 	# os.path.join(os.getcwd(), 'tmp') # Set output to ./tmp
 
-	if not os.path.exists(outputdir): # Check if ./tmp exists and if not, create it
-		os.makedirs(outputdir)
+	#if not os.path.exists(outputdir): # Check if ./tmp exists and if not, create it
+	#	os.makedirs(outputdir)
 
 	if split == True: # Should we split the files?
 		filename = files
