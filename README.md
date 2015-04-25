@@ -3,7 +3,7 @@ pyposter
 
 A simple usenet binary poster using python.
 
-Just clone it and run pyposter.py. Should work fine on both Windows and Linux. Remember to edit pyposter.ini before using!
+Remember to edit pyposter.ini before using!
 
 Requires Python 3 to run. And I don't support no legacy 32 bit systems.
 
