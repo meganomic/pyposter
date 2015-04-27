@@ -140,9 +140,10 @@ def main():
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
 	parser.add_argument('--nonzb', action='store_true', help = "Don't create a nzb file")
-	group = parser.add_mutually_exclusive_group()
-	group.add_argument('--rar', action='store_true', default = False, help = 'Rar files before upload')
-	group.add_argument('--split', action='store_true', default = False, help = 'Split files before upload')
+	parser.add_argument('--rar', action='store_true', default = False, help = 'Rar files instead of splitting before upload')
+	#group = parser.add_mutually_exclusive_group()
+	#group.add_argument('--rar', action='store_true', default = False, help = 'Rar files before upload')
+	#group.add_argument('--split', action='store_true', default = False, help = 'Split files before upload')
 
 	args = parser.parse_args() # Contains the arguments
 
@@ -180,20 +181,21 @@ def main():
 	usenetserver = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password)
 	usenetserver.connect() # Connect to server
 
-	if args.split == True: # Should split preprocessing be run?
+	if args.rar == True: # Should rar preprocessing be run?
+		tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
+		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
+			uploadfile(file, args.subject, usenetserver) # Go upload the files!
+		tempdir.cleanup() # Cleanup temporary directory
+	else: #args.split == True: # Should split preprocessing be run?
 		for filename in allfiles:
 			tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
 			for file in preprocess.process(filename, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
 				uploadfile(file, args.subject, usenetserver) # Go upload the files!
 			tempdir.cleanup() # Cleanup temporary directory
-	elif args.rar == True: # Should rar preprocessing be run?
-		tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
-		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
-			uploadfile(file, args.subject, usenetserver) # Go upload the files!
-		tempdir.cleanup() # Cleanup temporary directory
-	else: # Preprocessing is for losers. Just upload the file pls.
-		for file in allfiles:
-			uploadfile(file, args.subject, usenetserver) # Go upload the files!
+
+	#else: # Preprocessing is for losers. Just upload the file pls.
+		#for file in allfiles:
+			#uploadfile(file, args.subject, usenetserver) # Go upload the files!
 
 	usenetserver.quit() # Remember to disconnect =)
 
