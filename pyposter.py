@@ -139,7 +139,7 @@ def main():
 	parser.add_argument('--subject', dest = 'subject', help = 'Subject line, uses filename if not set')
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
-	parser.add_argument('--nonzb', action='store_true', help = "Don't create a nzb file")
+	parser.add_argument('--nonzb', action='store_true', default = False, help = "Don't create a nzb file")
 	parser.add_argument('--rar', action='store_true', default = False, help = 'Rar files instead of splitting before upload')
 	#group = parser.add_mutually_exclusive_group()
 	#group.add_argument('--rar', action='store_true', default = False, help = 'Rar files before upload')
