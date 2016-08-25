@@ -10,9 +10,9 @@ class usenetfile():
 	nzb = None # Nzb handler
 	blocksize = None
 	if platform.system() == 'Windows': # Check if it's windows
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencsse.dll'))
+		cyenc = ctypes.CDLL(os.path.join(os.path.join(sys.path[0], 'cyenc'), 'cyencsse.dll'))
 	else:
-		cyenc = ctypes.CDLL(os.path.join(sys.path[0], 'cyencsse.so')) # Assume linux if not
+		cyenc = ctypes.CDLL(os.path.join(os.path.join(sys.path[0], 'cyenc'), 'cyencsse.so')) # Assume linux if not
 
 	def __init__(self, filename, subject):
 		self.filename = filename
@@ -34,10 +34,10 @@ class usenetfile():
 		self.filesize = self.fd.tell() # Size of file
 		if self.filesize <= self.blocksize: # Calculate number of segments
 			self.totalsegments = 1 # If size is below or equal to blocksize then there is only 1 segment.
-			self.nzbfile = self.nzb.addfile(self.poster, self.subject + ' - \"' + self.filename + '\" ' + str(self.filesize) + ' yEnc bytes')
+			self.nzbfile = self.nzb.addfile(self.poster, self.subject + ' - \"' + os.path.split(self.filename)[1] + '\" ' + str(self.filesize) + ' yEnc bytes')
 		else:
 			self.totalsegments = math.ceil(self.filesize / self.blocksize)
-			self.nzbfile = self.nzb.addfile(self.poster, self.subject + ' - \"' + self.filename + '\" ' + 'yEnc ' + '(1' + '/' + str(self.totalsegments) + ')')
+			self.nzbfile = self.nzb.addfile(self.poster, self.subject + ' - \"' + os.path.split(self.filename)[1] + '\" ' + 'yEnc ' + '(1' + '/' + str(self.totalsegments) + ')')
 
 		self.fd.seek(0,0) # Reset file pointer
 
@@ -66,12 +66,12 @@ class usenetfile():
 		self.nzbfile.addsegment(segmentsize, self.currentsegment, messageid)
 
 		if self.totalsegments > 1: # The yenc specification differs for multipart files vs singlepart files
-			subject = self.subject + ' - \"' + self.filename + '\" ' + 'yEnc ' + '(' + str(self.currentsegment) + '/' + str(self.totalsegments) + ')'
-			yencheader = bytes('=ybegin part=' + str(self.currentsegment) + ' total=' + str(self.totalsegments) + ' line=128 size=' + str(segmentsize) + ' name=' + self.filename + '\r\n' +	'=ypart begin=' + str(startpos) + ' end=' + str(endpos) + '\r\n', 'utf-8')
+			subject = self.subject + ' - \"' + os.path.split(self.filename)[1] + '\" ' + 'yEnc ' + '(' + str(self.currentsegment) + '/' + str(self.totalsegments) + ')'
+			yencheader = bytes('=ybegin part=' + str(self.currentsegment) + ' total=' + str(self.totalsegments) + ' line=128 size=' + str(segmentsize) + ' name=' + os.path.split(self.filename)[1] + '\r\n' +	'=ypart begin=' + str(startpos) + ' end=' + str(endpos) + '\r\n', 'utf-8')
 			yenctrailer = bytes('\r\n=yend size=' + str(segmentsize) + ' part=' + str(self.currentsegment) + ' pcrc32=' + str(hex(pcrc32))[2:10] + ' crc32=' + str(hex(self.crc32))[2:10], 'utf-8')
 		else:
-			subject = self.subject + ' - \"' + self.filename + '\" ' + str(self.filesize) + ' yEnc bytes'
-			yencheader = bytes('=ybegin line=128 size=' + str(self.filesize) + ' name=' + self.filename + '\r\n', 'utf-8')
+			subject = self.subject + ' - \"' + os.path.split(self.filename)[1] + '\" ' + str(self.filesize) + ' yEnc bytes'
+			yencheader = bytes('=ybegin line=128 size=' + str(self.filesize) + ' name=' + os.path.split(self.filename)[1] + '\r\n', 'utf-8')
 			yenctrailer = bytes('\r\n=yend size=' + str(self.filesize) + ' crc32=' + str(hex(self.crc32))[2:10], 'utf-8')
 
 		# Usenet article header
@@ -139,11 +139,10 @@ def main():
 	parser.add_argument('--subject', dest = 'subject', help = 'Subject line, uses filename if not set')
 	parser.add_argument('--user', dest = 'username', help = 'Username for usenet server')
 	parser.add_argument('--password', dest = 'password', help = 'Password for usenet server')
-	parser.add_argument('--nonzb', action='store_true', default = False, help = "Don't create a nzb file")
-	parser.add_argument('--rar', action='store_true', default = False, help = 'Rar files instead of splitting before upload')
-	#group = parser.add_mutually_exclusive_group()
-	#group.add_argument('--rar', action='store_true', default = False, help = 'Rar files before upload')
-	#group.add_argument('--split', action='store_true', default = False, help = 'Split files before upload')
+	parser.add_argument('--nonzb', action='store_true', help = "Don't create a nzb file")
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument('--rar', action='store_true', default = False, help = 'Rar files before upload')
+	group.add_argument('--split', action='store_true', default = False, help = 'Split files before upload')
 
 	args = parser.parse_args() # Contains the arguments
 
@@ -181,21 +180,20 @@ def main():
 	usenetserver = usenet(config['pyposter']['server'], config['pyposter']['port'], username, password)
 	usenetserver.connect() # Connect to server
 
-	if args.rar == True: # Should rar preprocessing be run?
-		tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
-		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
-			uploadfile(file, args.subject, usenetserver) # Go upload the files!
-		tempdir.cleanup() # Cleanup temporary directory
-	else: #args.split == True: # Should split preprocessing be run?
+	if args.split == True: # Should split preprocessing be run?
 		for filename in allfiles:
 			tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
 			for file in preprocess.process(filename, True, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
 				uploadfile(file, args.subject, usenetserver) # Go upload the files!
 			tempdir.cleanup() # Cleanup temporary directory
-
-	#else: # Preprocessing is for losers. Just upload the file pls.
-		#for file in allfiles:
-			#uploadfile(file, args.subject, usenetserver) # Go upload the files!
+	elif args.rar == True: # Should rar preprocessing be run?
+		tempdir = tempfile.TemporaryDirectory() # Setup a temporary directory
+		for file in preprocess.process(allfiles, False, False, int(config['process']['blocksize']), int(config['process']['desiredsize']), tempdir.name):
+			uploadfile(file, args.subject, usenetserver) # Go upload the files!
+		tempdir.cleanup() # Cleanup temporary directory
+	else: # Preprocessing is for losers. Just upload the file pls.
+		for file in allfiles:
+			uploadfile(file, args.subject, usenetserver) # Go upload the files!
 
 	usenetserver.quit() # Remember to disconnect =)
 
