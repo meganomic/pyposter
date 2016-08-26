@@ -95,7 +95,7 @@ def process(files, split, verbose, blocksize, desiredsize, outputdir):
 		print(filename + ' done.')
 		print('Creating par2 files... (This may take several minutes)')
 		print('Creating par2 for ' + filename + '...')
-		createpar2(blocksize, outputdir, filename + '.par', filename, verbose)
+		createpar2(blocksize, outputdir, filename + '.par2', filename, verbose)
 	else:
 		print('Creating rar(s)...')
 		rarfile = os.path.splitext(files[0])[0] + '.rar'
@@ -103,7 +103,7 @@ def process(files, split, verbose, blocksize, desiredsize, outputdir):
 
 		print('Creating par2 files... (This may take several minutes)')
 		print('Creating par2 for ' + rarfile + '...')
-		createpar2(blocksize, outputdir, rarfile + '.par', filelist, verbose)
+		createpar2(blocksize, outputdir, rarfile + '.par2', filelist, verbose)
 
 	allfiles = [] # Need a list of all the files we made
 	for filename in os.listdir(outputdir): # Go through all entries in the output directory
